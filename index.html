@@ -100,7 +100,7 @@
             <button onclick="startRoulette()" style="background: #e74c3c; margin-bottom:10px; width: 100%;">🎰 今夜の推薦作品を抽選</button>
             <div id="roulette-result">・・・</div>
         </div>
-
+<div id="year-filter-container" style="margin-bottom: 15px; text-align: center;"></div>
         <input type="text" id="search-input" placeholder="🔍 名前やタグで検索..." oninput="refreshDisplay()" style="margin-bottom: 25px;">
         <div id="movie-list" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;"></div>
     </div>
@@ -127,7 +127,8 @@
 
     let currentUser = null;
     let allMovies = [];
-    let editingId = null; // 編集中のIDを保存する用
+    let editingId = null;
+    window.selectedYear = ""; // 選んでいる年を覚える箱
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -153,7 +154,6 @@
         });
     }
 
-    // 保存・更新ボタンの処理
     window.addMovie = async () => {
         const title = document.getElementById('movie-title').value.trim();
         const tagInput = document.getElementById('movie-tags').value.trim();
@@ -162,22 +162,15 @@
         const comment = document.getElementById('movie-comment').value.trim();
         
         if (!title || !date) return alert("タイトルと年月を入れてね！");
-
         const tags = tagInput.split(/[\s,、]+/).filter(t => t !== "");
         const movieData = { uid: currentUser.uid, title, tags, date, score, comment, updatedAt: Date.now() };
 
         if (editingId) {
-            // 編集モード：既存のデータを書き換え
             await updateDoc(doc(db, "movies", editingId), movieData);
-            alert("修正完了！📽️");
             editingId = null;
-            document.getElementById('save-btn').innerText = "💾 保存";
-            document.getElementById('save-btn').style.background = "#27ae60";
         } else {
-            // 新規モード：新しく追加（これで複数回の履歴が重なる！）
             movieData.createdAt = Date.now();
             await addDoc(collection(db, "movies"), movieData);
-            alert("保存完了！🎬"); 
         }
         resetForm();
     };
@@ -187,43 +180,47 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        // --- ここから追加 ---
+        // 年代ボタンの表示
+        const yearContainer = document.getElementById('year-filter-container');
+        if (yearContainer) {
+            yearContainer.innerHTML = `<button onclick="window.filterByYear('')" style="background:${window.selectedYear === '' ? 'var(--neon-pink)' : '#444'}; margin-right:5px; padding:5px 10px; font-size:12px;">全て</button>`;
+            const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
+            allYears.forEach(year => {
+                const btn = document.createElement('button');
+                btn.innerText = year + "年";
+                btn.style.marginRight = "5px"; btn.style.padding = "5px 10px"; btn.style.fontSize = "12px";
+                btn.style.background = (year === window.selectedYear) ? "var(--neon-pink)" : "#222";
+                btn.onclick = () => window.filterByYear(year);
+                yearContainer.appendChild(btn);
+            });
+        }
+
+        // タグ候補の表示
         const tagCloud = document.getElementById('tag-cloud');
         if (tagCloud) {
             tagCloud.innerHTML = "";
-            // 全ての映画からタグを抜き出して重複を消す
             const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
             allTags.forEach(tag => {
                 const span = document.createElement('span');
-                span.innerText = "#" + tag;
-                span.className = "tag-candidate";
+                span.innerText = "#" + tag; span.className = "tag-candidate";
                 span.onclick = () => {
                     const input = document.getElementById('movie-tags');
-                    if (!input.value.includes(tag)) {
-                        input.value = (input.value + " " + tag).trim();
-                    }
+                    if (!input.value.includes(tag)) input.value = (input.value + " " + tag).trim();
                 };
                 tagCloud.appendChild(span);
             });
         }
 
-        // 過去作リストの更新
+        // 過去作選択の更新
         const sel = document.getElementById('movie-select');
         const titles = [...new Set(allMovies.map(m => m.title))].sort();
         sel.innerHTML = '<option value="">-- 過去の作品から選ぶ --</option>';
         titles.forEach(t => {
             const o = document.createElement('option');
-            o.value = t; o.innerText = t;
-            sel.appendChild(o);
+            o.value = t; o.innerText = t; sel.appendChild(o);
         });
 
-        // 電光掲示板の更新（最新5件）
-        const marquee = document.getElementById('hall-of-fame-list');
-        if (allMovies.length > 0) {
-            marquee.innerText = "【今夜のノミネート】 " + allMovies.slice(0, 5).map(m => m.title).join(" 🎬 ") + " 🎬 ";
-        }
-
-        // タイトルごとにグループ化
+        // リスト表示
         const groups = {};
         allMovies.forEach(m => {
             if (!groups[m.title]) groups[m.title] = [];
@@ -232,23 +229,24 @@
 
         Object.keys(groups).forEach(title => {
             const history = groups[title];
-            const latest = history[0];
+            // 年代フィルター
+            const filtered = window.selectedYear ? history.filter(h => h.date.startsWith(window.selectedYear)) : history;
+            if (filtered.length === 0) return;
+
+            const latest = filtered[0];
             const match = !qSearch || title.toLowerCase().includes(qSearch) || (latest.tags || []).some(t => t.toLowerCase().includes(qSearch));
-            
             if (!match) return;
 
             const card = document.createElement('div');
             card.className = 'card';
-            // 最高スコアで色を決める
             const maxScore = Math.max(...history.map(h => h.score));
             card.style.borderTopColor = maxScore >= 120 ? "var(--gold)" : (maxScore >= 100 ? "var(--neon-blue)" : "#444");
-
             card.innerHTML = `
                 <div style="font-weight:bold; color:var(--gold); font-size:18px;">${title}</div>
                 <div style="margin:8px 0;">${(latest.tags || []).map(t => `<span class="tag">#${t}</span>`).join("")}</div>
                 <div style="background:#111; padding:8px; border-radius:5px; margin-top:10px;">
-                    ${history.map(h => `
-                        <div style="font-size:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:3px;">
+                    ${filtered.map(h => `
+                        <div style="font-size:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding:5px 0;">
                             <span>${h.date}：<b>${h.score}点</b></span>
                             <span>
                                 <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:12px;">✏️</button>
@@ -263,6 +261,8 @@
         });
     };
 
+    window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
+
     window.editMovie = (id) => {
         const m = allMovies.find(doc => doc.id === id);
         if (!m) return;
@@ -272,17 +272,13 @@
         document.getElementById('movie-date').value = m.date;
         document.getElementById('movie-score').value = m.score;
         document.getElementById('movie-comment').value = m.comment;
-        
-        const btn = document.getElementById('save-btn');
-        btn.innerText = "🆙 更新";
-        btn.style.background = "#3498db";
+        document.getElementById('save-btn').innerText = "🆙 更新";
+        document.getElementById('save-btn').style.background = "#3498db";
         window.scrollTo(0,0);
     };
 
     window.deleteMovie = async (id) => {
-        if (confirm("この視聴記録、フィルムから抹消していいかい？")) {
-            await deleteDoc(doc(db, "movies", id));
-        }
+        if (confirm("この視聴記録を抹消するかい？")) await deleteDoc(doc(db, "movies", id));
     };
 
     window.selectFromHistory = () => {
@@ -307,13 +303,17 @@
 
     window.startRoulette = () => {
         const res = document.getElementById('roulette-result');
-        if (allMovies.length === 0) return alert("データがありません");
+        if (allMovies.length === 0) return;
         let c = 0;
         const spin = () => {
             res.innerText = allMovies[Math.floor(Math.random() * allMovies.length)].title;
             if (c++ < 20) setTimeout(spin, 70);
             else { res.classList.add('flash-effect'); setTimeout(()=>res.classList.remove('flash-effect'), 2000); }
         }; spin();
+    };
+    window.filterByYear = (year) => {
+        window.selectedYear = year;
+        refreshDisplay();
     };
 </script>
 </body>
