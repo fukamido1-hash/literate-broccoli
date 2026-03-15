@@ -33,6 +33,26 @@
         
         button { cursor: pointer; background: #c0392b; color: white; border: none; font-weight: bold; padding: 12px 20px; border-radius: 5px; }
         #user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 14px; color: #aaa; }
+        /* --- ここから下を <style> 内の最後の方に追加！ --- */
+
+.tag-candidate {
+    display: inline-block;
+    background: #222;
+    color: var(--neon-blue);
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 11px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    border: 1px solid var(--neon-blue);
+    transition: 0.2s;
+}
+
+.tag-candidate:hover {
+    background: var(--neon-blue);
+    color: #000;
+}
     </style>
 </head>
 <body>
@@ -64,7 +84,8 @@
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
-                <input type="text" id="movie-tags" placeholder="タグ（スペース区切りでOK）" style="flex: 1; margin-bottom: 0;">
+                <<input type="text" id="movie-tags" placeholder="🏷 タグ（スペースで区切ってね）">
+　　　　　　　　　<div id="tag-cloud" style="margin-top: 5px; min-height: 20px; text-align: left;"></div>
             </div>
 
             <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
@@ -167,6 +188,26 @@
         const list = document.getElementById('movie-list');
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
+
+        // --- ここから追加 ---
+        const tagCloud = document.getElementById('tag-cloud');
+        if (tagCloud) {
+            tagCloud.innerHTML = "";
+            // 全ての映画からタグを抜き出して重複を消す
+            const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
+            allTags.forEach(tag => {
+                const span = document.createElement('span');
+                span.innerText = "#" + tag;
+                span.className = "tag-candidate";
+                span.onclick = () => {
+                    const input = document.getElementById('movie-tags');
+                    if (!input.value.includes(tag)) {
+                        input.value = (input.value + " " + tag).trim();
+                    }
+                };
+                tagCloud.appendChild(span);
+            });
+        }
 
         // 過去作リストの更新
         const sel = document.getElementById('movie-select');
