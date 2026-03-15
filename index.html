@@ -76,17 +76,17 @@
     </div>
 
     <div class="container">
-     <div class="input-form">
-           <div class="input-form">
+        <div class="input-form">
             <select id="movie-select" onchange="selectFromHistory()" style="margin-bottom: 15px;">
                 <option value="">-- 過去の作品から選ぶ --</option>
             </select>
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
-                <<input type="text" id="movie-tags" placeholder="🏷 タグ（スペースで区切ってね）">
-　　　　　　　　　<div id="tag-cloud" style="margin-top: 5px; min-height: 20px; text-align: left;"></div>
+                <input type="text" id="movie-tags" placeholder="🏷 タグ（スペース区切り）" style="flex: 1; margin-bottom: 0;">
             </div>
+
+            <div id="tag-cloud" style="margin-top: -5px; margin-bottom: 10px; min-height: 20px; text-align: left;"></div>
 
             <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
 
@@ -96,10 +96,8 @@
                 <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60; height: 45px;">💾 保存</button>
             </div>
         </div>
-       
-
         <div class="roulette-box">
-            <button onclick="startRoulette()" style="background: #e74c3c; margin-bottom:10px;">🎰 今夜の推薦作品を抽選</button>
+            <button onclick="startRoulette()" style="background: #e74c3c; margin-bottom:10px; width: 100%;">🎰 今夜の推薦作品を抽選</button>
             <div id="roulette-result">・・・</div>
         </div>
 
