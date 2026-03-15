@@ -90,16 +90,16 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyDGwwxmsvTu03gubuBAmEnOEl7K5DZpC5M", // ←ここを直したよ！
-  authDomain: "my-movie-theater-b7865.firebaseapp.com",
-  projectId: "my-movie-theater-b7865",
-  storageBucket: "my-movie-theater-b7865.firebasestorage.app",
-  messagingSenderId: "288132146142",
-  appId: "1:288132146142:web:040705c5e22575cfb3734f"
-};
+        apiKey: "AIzaSyDGwwxmsvTu03gubuBAmEnOEl7K5DZpC5M",
+        authDomain: "my-movie-theater-b7865.firebaseapp.com",
+        projectId: "my-movie-theater-b7865",
+        storageBucket: "my-movie-theater-b7865.firebasestorage.app",
+        messagingSenderId: "288132146142",
+        appId: "1:288132146142:web:040705c5e22575cfb3734f"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -108,6 +108,7 @@
 
     let currentUser = null;
     let allMovies = [];
+    let editingId = null; // 編集中のIDを保存する用
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -133,6 +134,7 @@
         });
     }
 
+    // 保存・更新ボタンの処理
     window.addMovie = async () => {
         const title = document.getElementById('movie-title').value.trim();
         const tagInput = document.getElementById('movie-tags').value.trim();
@@ -142,22 +144,22 @@
         
         if (!title || !date) return alert("タイトルと年月を入れてね！");
 
-        // スペースでタグを分ける
         const tags = tagInput.split(/[\s,、]+/).filter(t => t !== "");
+        const movieData = { uid: currentUser.uid, title, tags, date, score, comment, updatedAt: Date.now() };
 
-        const movieData = {
-            uid: currentUser.uid,
-            title,
-            tags,
-            date, 
-            score,
-            comment,
-            createdAt: Date.now()
-        };
-
-        // ここから下が「保存」の心臓部！
-        await addDoc(collection(db, "movies"), movieData);
-        alert("保存完了！🎬"); 
+        if (editingId) {
+            // 編集モード：既存のデータを書き換え
+            await updateDoc(doc(db, "movies", editingId), movieData);
+            alert("修正完了！📽️");
+            editingId = null;
+            document.getElementById('save-btn').innerText = "💾 保存";
+            document.getElementById('save-btn').style.background = "#27ae60";
+        } else {
+            // 新規モード：新しく追加（これで複数回の履歴が重なる！）
+            movieData.createdAt = Date.now();
+            await addDoc(collection(db, "movies"), movieData);
+            alert("保存完了！🎬"); 
+        }
         resetForm();
     };
 
@@ -166,6 +168,7 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
+        // 過去作リストの更新
         const sel = document.getElementById('movie-select');
         const titles = [...new Set(allMovies.map(m => m.title))].sort();
         sel.innerHTML = '<option value="">-- 過去の作品から選ぶ --</option>';
@@ -175,6 +178,13 @@
             sel.appendChild(o);
         });
 
+        // 電光掲示板の更新（最新5件）
+        const marquee = document.getElementById('hall-of-fame-list');
+        if (allMovies.length > 0) {
+            marquee.innerText = "【今夜のノミネート】 " + allMovies.slice(0, 5).map(m => m.title).join(" 🎬 ") + " 🎬 ";
+        }
+
+        // タイトルごとにグループ化
         const groups = {};
         allMovies.forEach(m => {
             if (!groups[m.title]) groups[m.title] = [];
@@ -190,19 +200,59 @@
 
             const card = document.createElement('div');
             card.className = 'card';
-            card.style.borderTopColor = latest.score >= 120 ? "var(--gold)" : (latest.score >= 100 ? "var(--neon-blue)" : "#444");
+            // 最高スコアで色を決める
+            const maxScore = Math.max(...history.map(h => h.score));
+            card.style.borderTopColor = maxScore >= 120 ? "var(--gold)" : (maxScore >= 100 ? "var(--neon-blue)" : "#444");
+
             card.innerHTML = `
-                <div style="font-weight:bold; color:var(--gold);">${title}</div>
+                <div style="font-weight:bold; color:var(--gold); font-size:18px;">${title}</div>
                 <div style="margin:8px 0;">${(latest.tags || []).map(t => `<span class="tag">#${t}</span>`).join("")}</div>
-                <div style="font-size:12px; color:#ccc;">${history.map(h => `<div>${h.date}: ${h.score}点</div>`).join("")}</div>
+                <div style="background:#111; padding:8px; border-radius:5px; margin-top:10px;">
+                    ${history.map(h => `
+                        <div style="font-size:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:3px;">
+                            <span>${h.date}：<b>${h.score}点</b></span>
+                            <span>
+                                <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:12px;">✏️</button>
+                                <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; padding:0; font-size:12px; margin-left:8px;">🗑️</button>
+                            </span>
+                        </div>
+                        <div style="font-size:11px; color:#aaa; margin-bottom:8px; padding-left:5px;">"${h.comment || ''}"</div>
+                    `).join("")}
+                </div>
             `;
             list.appendChild(card);
         });
     };
 
+    window.editMovie = (id) => {
+        const m = allMovies.find(doc => doc.id === id);
+        if (!m) return;
+        editingId = id;
+        document.getElementById('movie-title').value = m.title;
+        document.getElementById('movie-tags').value = (m.tags || []).join(" ");
+        document.getElementById('movie-date').value = m.date;
+        document.getElementById('movie-score').value = m.score;
+        document.getElementById('movie-comment').value = m.comment;
+        
+        const btn = document.getElementById('save-btn');
+        btn.innerText = "🆙 更新";
+        btn.style.background = "#3498db";
+        window.scrollTo(0,0);
+    };
+
+    window.deleteMovie = async (id) => {
+        if (confirm("この視聴記録、フィルムから抹消していいかい？")) {
+            await deleteDoc(doc(db, "movies", id));
+        }
+    };
+
     window.selectFromHistory = () => {
         const val = document.getElementById('movie-select').value;
-        if (val) document.getElementById('movie-title').value = val;
+        if (val) {
+            document.getElementById('movie-title').value = val;
+            const existing = allMovies.find(m => m.title === val);
+            if (existing) document.getElementById('movie-tags').value = (existing.tags || []).join(" ");
+        }
     };
     
     window.resetForm = () => {
@@ -211,6 +261,9 @@
         document.getElementById('movie-date').value = "";
         document.getElementById('movie-score').value = "";
         document.getElementById('movie-comment').value = "";
+        editingId = null;
+        document.getElementById('save-btn').innerText = "💾 保存";
+        document.getElementById('save-btn').style.background = "#27ae60";
     };
 
     window.startRoulette = () => {
