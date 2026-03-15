@@ -134,24 +134,26 @@
         const score = Number(document.getElementById('movie-score').value) || 0;
         const comment = document.getElementById('movie-comment').value.trim();
         
-        if (!title || !date) return alert("タイトルと日付を入れてね！");
+        if (!title || !date) return alert("タイトルと年月を入れてね！");
 
-        // スペースやカンマでタグを分割する魔法の1行
+        // スペースでタグを分ける
         const tags = tagInput.split(/[\s,、]+/).filter(t => t !== "");
 
         const movieData = {
             uid: currentUser.uid,
             title,
             tags,
-            date,
+            date, 
             score,
             comment,
             createdAt: Date.now()
         };
 
+        // ここから下が「保存」の心臓部！
         await addDoc(collection(db, "movies"), movieData);
+        alert("保存完了！🎬"); 
         resetForm();
-    };
+    };};
 
     window.refreshDisplay = () => {
         const list = document.getElementById('movie-list');
