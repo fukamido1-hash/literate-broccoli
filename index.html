@@ -66,7 +66,7 @@
             </div>
             <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2"></textarea>
             <div style="display: flex; gap: 10px;">
-                <input type="date" id="movie-date" style="flex: 1;"> <input type="number" id="movie-score" placeholder="得点" style="flex: 1;">
+                <input type="month" id="movie-date" style="flex: 1;" onclick="this.showPicker()">
                 <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60;">💾 保存</button>
             </div>
         </div>
