@@ -62,25 +62,27 @@
     </div>
 
     <div class="input-form">
-        <select id="movie-select" onchange="selectFromHistory()"><option value="">-- 過去作から選ぶ --</option></select>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2;">
-            <input type="text" id="movie-tags" placeholder="🏷 ジャンル/タグ" style="flex: 1.2;">
+        <select id="movie-select" onchange="selectFromHistory()" style="margin-bottom: 15px;"><option value="">-- 過去作から選ぶ --</option></select>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
+            <input type="text" id="movie-tags" placeholder="🏷 ジャンル/タグ" style="flex: 1.2; margin-bottom: 0;">
         </div>
         <div id="tag-cloud" style="margin-bottom: 10px; min-height: 20px;"></div>
 
-        <div style="display: flex; gap: 10px;">
-            <select id="movie-platform" style="flex: 1;">
+        <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="movie-platform" style="flex: 1; margin-bottom: 0;">
                 <option value="🎥 映画館">🎥 映画館</option>
                 <option value="📺 配信">📺 配信</option>
                 <option value="💿 DVD/BD">💿 DVD/BD</option>
                 <option value="📻 その他">📻 その他</option>
             </select>
-            <input type="month" id="movie-date" style="flex: 1;" onclick="this.showPicker()">
-            <input type="number" id="movie-score" placeholder="点数" style="flex: 0.6;">
-            <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60; color:white;">💾 保存</button>
+            <input type="month" id="movie-date" style="flex: 1; margin-bottom: 0;" onclick="this.showPicker()">
+            <input type="number" id="movie-score" placeholder="点数" style="flex: 0.6; margin-bottom: 0;">
+            <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60; color:white; height: 45px;">💾 保存</button>
         </div>
-        <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2"></textarea>
     </div>
 
     <div class="roulette-box">
@@ -220,7 +222,7 @@
             groups[m.title].push(m);
         });
 
-        let displayCount = 0; // 表示件数カウンター
+        let displayCount = 0;
 
         Object.keys(groups).forEach(title => {
             const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
@@ -232,7 +234,7 @@
 
             if (!yearMatch || !genreMatch || !textMatch) return;
 
-            displayCount++; // 表示される場合にカウントアップ
+            displayCount++;
 
             const card = document.createElement('div');
             card.className = 'card';
