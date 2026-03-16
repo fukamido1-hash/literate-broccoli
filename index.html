@@ -61,29 +61,41 @@
         <div id="hall-of-fame-list" class="marquee">【上映開始】 お気に入りの作品を記録しよう！ 🎬 </div>
     </div>
 
-    <div class="input-form">
-        <select id="movie-select" onchange="selectFromHistory()" style="margin-bottom: 15px;"><option value="">-- 過去作から選ぶ --</option></select>
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
-            <input type="text" id="movie-tags" placeholder="🏷 ジャンル/タグ" style="flex: 1.2; margin-bottom: 0;">
-        </div>
-        <div id="tag-cloud" style="margin-bottom: 10px; min-height: 20px;"></div>
-
-        <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
-
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <select id="movie-platform" style="flex: 1; margin-bottom: 0;">
-                <option value="🎥 映画館">🎥 映画館</option>
-                <option value="📺 配信">📺 配信</option>
-                <option value="💿 DVD/BD">💿 DVD/BD</option>
-                <option value="📻 その他">📻 その他</option>
-            </select>
-            <input type="month" id="movie-date" style="flex: 1; margin-bottom: 0;" onclick="this.showPicker()">
-            <input type="number" id="movie-score" placeholder="点数" style="flex: 0.6; margin-bottom: 0;">
-            <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60; color:white; height: 45px;">💾 保存</button>
-        </div>
+    <<div class="input-form">
+    <select id="movie-select" onchange="selectFromHistory()" style="margin-bottom: 15px;"><option value="">-- 過去作から選ぶ --</option></select>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
+        <input type="text" id="movie-tags" placeholder="🏷 ジャンル/タグ" style="flex: 1.2; margin-bottom: 0;">
     </div>
+    <div id="tag-cloud" style="margin-bottom: 10px; min-height: 20px;"></div>
+
+    <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <select id="movie-platform" style="flex: 1.5; min-width: 150px; margin-bottom: 0;" onchange="toggleExtraInput()">
+            <option value="🎥 映画館">🎥 映画館</option>
+            <option value="🔴 Netflix">🔴 Netflix</option>
+            <option value="🔵 U-NEXT">🔵 U-NEXT</option>
+            <option value="🟢 Hulu">🟢 Hulu</option>
+            <option value="🟠 Amazonプライム">🟠 Amazonプライム</option>
+            <option value="🔴 FOD">🔴 FOD</option>
+            <option value="🔵 ディズニープラス">🔵 ディズニープラス</option>
+            <option value="🟡 dアニメストア">🟡 dアニメストア</option>
+            <option value="🟢 ABEMA">🟢 ABEMA</option>
+            <option value="🍎 Apple TV+">🍎 Apple TV+</option>
+            <option value="📺 地上波/BS">📺 地上波/BS</option>
+            <option value="💿 DVD/BD">💿 DVD/BD</option>
+            <option value="📻 配信(その他)">📻 配信(その他)</option>
+        </select>
+
+        <input type="text" id="platform-extra" placeholder="サービス名を入力" style="flex: 1; display: none; margin-bottom: 0;">
+
+        <input type="month" id="movie-date" style="flex: 1; min-width: 120px; margin-bottom: 0;" onclick="this.showPicker()">
+        <input type="number" id="movie-score" placeholder="点数" style="flex: 0.6; min-width: 60px; margin-bottom: 0;">
+        <button id="save-btn" onclick="addMovie()" style="flex: 1; min-width: 100px; background: #27ae60; color:white; height: 45px;">💾 保存</button>
+    </div>
+</div>
 
     <div class="roulette-box">
         <select id="roulette-mode" style="width: auto; background: #222; margin-bottom: 10px; display: inline-block;">
@@ -125,6 +137,32 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
+    // 「その他」入力欄の表示切り替え
+window.toggleExtraInput = () => {
+    const platform = document.getElementById('movie-platform').value;
+    const extraInput = document.getElementById('platform-extra');
+    extraInput.style.display = (platform === '📻 配信(その他)') ? 'block' : 'none';
+};
+
+// 保存処理も少し修正（その他が選ばれていたら入力欄の値を使う）
+const originalAddMovie = window.addMovie;
+window.addMovie = async () => {
+    const platformSelect = document.getElementById('movie-platform');
+    const extraInput = document.getElementById('platform-extra');
+    
+    // もし「その他」が選ばれてて、入力欄に何か書いてあればそっちを優先
+    if (platformSelect.value === '📻 配信(その他)' && extraInput.value.trim() !== "") {
+        // 一時的に値を書き換えて保存させる
+        const originalVal = platformSelect.value;
+        platformSelect.options[platformSelect.selectedIndex].value = "📻 " + extraInput.value.trim();
+        await originalAddMovie();
+        platformSelect.options[platformSelect.selectedIndex].value = originalVal; // 元に戻す
+        extraInput.value = "";
+        extraInput.style.display = 'none';
+    } else {
+        await originalAddMovie();
+    }
+};
 
     let currentUser = null;
     let allMovies = [];
@@ -179,91 +217,93 @@
     };
 
     window.refreshDisplay = () => {
-        const list = document.getElementById('movie-list');
-        const qSearch = document.getElementById('search-input').value.toLowerCase();
-        list.innerHTML = "";
+    const list = document.getElementById('movie-list');
+    const qSearch = document.getElementById('search-input').value.toLowerCase();
+    list.innerHTML = "";
 
-        const yearContainer = document.getElementById('year-filter-container');
-        const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
-        yearContainer.innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>`;
-        allYears.forEach(y => {
-            yearContainer.innerHTML += `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`;
-        });
+    // --- 1. フィルタなどの生成処理 (中略) ---
+    // (ここはさっきのコードと同じなので、そのまま維持してね)
 
-        const genreContainer = document.getElementById('genre-filter-container');
-        const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
-        if (!window.selectedGenres) window.selectedGenres = [];
-        genreContainer.innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全ジャンル</button>`;
-        allTags.forEach(g => {
-            const isActive = window.selectedGenres.includes(g);
-            genreContainer.innerHTML += `<button onclick="filterByGenre('${g}')" class="filter-btn ${isActive ? 'active' : ''}">#${g}</button>`;
-        });
-
-        const tagCloud = document.getElementById('tag-cloud');
-        tagCloud.innerHTML = "";
-        allTags.forEach(tag => {
-            const span = document.createElement('span');
-            span.innerText = "#" + tag; span.className = "tag-candidate";
-            span.onclick = () => {
-                const input = document.getElementById('movie-tags');
-                if (!input.value.includes(tag)) input.value = (input.value + " " + tag).trim();
-            };
-            tagCloud.appendChild(span);
-        });
-
-        const sel = document.getElementById('movie-select');
-        const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
-        sel.innerHTML = '<option value="">-- 過去作から選ぶ --</option>';
-        uniqueTitles.forEach(t => sel.innerHTML += `<option value="${t}">${t}</option>`);
-
-        const groups = {};
-        allMovies.forEach(m => {
-            if (!groups[m.title]) groups[m.title] = [];
-            groups[m.title].push(m);
-        });
-
-        let displayCount = 0;
-
-        Object.keys(groups).forEach(title => {
-            const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
-            const latest = history[0];
-
-            const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
-            const genreMatch = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (latest.tags || []).includes(g));
-            const textMatch = !qSearch || title.toLowerCase().includes(qSearch) || (latest.comment || "").toLowerCase().includes(qSearch);
-
-            if (!yearMatch || !genreMatch || !textMatch) return;
-
-            displayCount++;
-
-            const card = document.createElement('div');
-            card.className = 'card';
-            const maxScore = Math.max(...history.map(h => h.score));
-            card.style.borderTopColor = maxScore >= 120 ? "var(--gold)" : (maxScore >= 100 ? "var(--neon-blue)" : "#444");
-
-            card.innerHTML = `
-                <div style="font-weight:bold; color:var(--gold); font-size:18px;">${title}</div>
-                <div style="margin:8px 0;">${(latest.tags || []).map(t => `<span class="tag">#${t}</span>`).join("")}</div>
-                <div style="background:#111; padding:8px; border-radius:5px;">
-                    ${history.map((h, idx) => `
-                        <div style="font-size:12px; border-bottom:1px solid #333; padding:5px 0;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <span><small class="platform-label">${h.platform || '🎥'}</small> <b>${history.length - idx}回目</b></span>
-                                <span>${h.date}：<b>${h.score}点</b></span>
-                            </div>
-                            <div style="font-size:11px; color:#aaa; margin-top:4px;">"${h.comment || ''}"</div>
-                            <div style="text-align:right;">
-                                <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:11px;">✏️</button>
-                                <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; padding:0; font-size:11px; margin-left:8px;">🗑️</button>
-                            </div>
-                        </div>
-                    `).join("")}
-                </div>
-            `;
-            list.appendChild(card);
-        });
-        document.getElementById('movie-count').innerText = displayCount + "本";
+    // --- 2. サービスごとのカラー設定 ---
+    const platformColors = {
+        "🔴 Netflix": "#E50914",
+        "🔵 U-NEXT": "#31A1EE",
+        "🟢 Hulu": "#32E064",
+        "🟠 Amazonプライム": "#FF9900",
+        "🔴 FOD": "#ED1A3D",
+        "🔵 ディズニープラス": "#113CCF",
+        "🟡 dアニメストア": "#F08300",
+        "🟢 ABEMA": "#00C300",
+        "🍎 Apple TV+": "#FFFFFF",
+        "🎥 映画館": "#ffd700", // ゴールド
+        "📺 地上波/BS": "#888888",
+        "💿 DVD/BD": "#3498db"
     };
+
+    // --- 3. データのグループ化と表示 ---
+    const groups = {};
+    allMovies.forEach(m => {
+        if (!groups[m.title]) groups[m.title] = [];
+        groups[m.title].push(m);
+    });
+
+    let displayCount = 0;
+    Object.keys(groups).forEach(title => {
+        const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
+        const latest = history[0];
+
+        // 絞り込みロジック (中略)
+        const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
+        const genreMatch = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (latest.tags || []).includes(g));
+        const textMatch = !qSearch || title.toLowerCase().includes(qSearch) || (latest.comment || "").toLowerCase().includes(qSearch);
+        if (!yearMatch || !genreMatch || !textMatch) return;
+
+        displayCount++;
+
+        // カードの描画
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // ★色付けロジック：最新の視聴環境に合わせて色を決定
+        let themeColor = "#444"; // デフォルト
+        for (let key in platformColors) {
+            if (latest.platform && latest.platform.includes(key.replace(/.[ ]/, ""))) {
+                themeColor = platformColors[key];
+                break;
+            }
+        }
+        // 高得点(120点)は特別にゴールドの枠を優先
+        const maxScore = Math.max(...history.map(h => h.score));
+        card.style.borderTop = `8px solid ${maxScore >= 120 ? "var(--gold)" : themeColor}`;
+
+        card.innerHTML = `
+            <div style="font-weight:bold; color:var(--gold); font-size:18px;">${title}</div>
+            <div style="margin:8px 0;">${(latest.tags || []).map(t => `<span class="tag">#${t}</span>`).join("")}</div>
+            <div style="background:#111; padding:8px; border-radius:5px;">
+                ${history.map((h, idx) => `
+                    <div style="font-size:12px; border-bottom:1px solid #333; padding:5px 0;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>
+                                <small class="platform-label" style="border-left: 3px solid ${platformColors[h.platform] || '#888'}; padding-left:4px;">
+                                    ${h.platform || '🎥'}
+                                </small> 
+                                <b>${history.length - idx}回目</b>
+                            </span>
+                            <span>${h.date}：<b>${h.score}点</b></span>
+                        </div>
+                        <div style="font-size:11px; color:#aaa; margin-top:4px;">"${h.comment || ''}"</div>
+                        <div style="text-align:right;">
+                            <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:11px;">✏️</button>
+                            <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; padding:0; font-size:11px; margin-left:8px;">🗑️</button>
+                        </div>
+                    </div>
+                `).join("")}
+            </div>
+        `;
+        list.appendChild(card);
+    });
+    document.getElementById('movie-count').innerText = displayCount + "本";
+};
 
     window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
     window.filterByGenre = (genre) => {
