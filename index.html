@@ -8,57 +8,25 @@
         :root { --neon-pink: #ff00ff; --neon-blue: #00ffff; --gold: #ffd700; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 10px; }
         .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-
-        /* フォーム系 */
         .input-form { background: #2a2a2a; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #444; }
         input, textarea, select { background: #111; color: #fff; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         .flex-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .flex-row > * { flex: 1; min-width: 120px; }
         #save-btn { background: #27ae60; color:white; height: 55px; font-size: 18px; width: 100%; border-radius: 12px; font-weight: bold; border:none; margin-top: 5px; cursor: pointer; }
-
-        /* ルーレット（保存ボタンの下に追加） */
-        .roulette-container { 
-            background: linear-gradient(135deg, #1a1a1a, #2a2a2a); 
-            padding: 15px; 
-            border-radius: 15px; 
-            margin-top: 15px; 
-            border: 2px dashed var(--neon-pink); 
-            text-align: center;
-        }
+        .roulette-container { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); padding: 15px; border-radius: 15px; margin-top: 15px; border: 2px dashed var(--neon-pink); text-align: center; }
         #roulette-display { font-size: 18px; font-weight: bold; color: var(--gold); min-height: 26px; margin-bottom: 10px; }
-        .roulette-btn { 
-            background: none; border: 1px solid var(--neon-pink); color: var(--neon-pink); 
-            padding: 8px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s;
-        }
+        .roulette-btn { background: none; border: 1px solid var(--neon-pink); color: var(--neon-pink); padding: 8px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .roulette-btn:hover { background: var(--neon-pink); color: white; }
-
-        /* 操作パネル */
         .controls { background: #111; padding: 12px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        .view-switch { display: flex; background: #222; border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 12px; }
-        .view-btn { flex: 1; background: none; border: none; color: #888; padding: 10px; font-size: 13px; border-radius: 8px; cursor: pointer; }
-        .view-btn.active { background: #444; color: #fff; font-weight: bold; }
-
         .filter-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 8px; scrollbar-width: none; }
         .filter-btn { display: inline-block; background: #333; color: #fff; border: 1px solid #555; padding: 8px 16px; border-radius: 20px; font-size: 13px; margin-right: 6px; cursor: pointer; }
         .filter-btn.active { background: var(--neon-pink); border-color: var(--neon-pink); }
-
-        /* 作品リスト */
         #movie-list { display: grid; gap: 15px; }
-        #movie-list.grid-mode { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-        
         .card { background: #252525; border-radius: 12px; padding: 15px; border-top: 6px solid #444; display: flex; flex-direction: column; }
-        .grid-mode .card { padding: 12px; text-align: center; height: 110px; border-top-width: 4px; }
-        .grid-mode .card .card-detail, .grid-mode .count-badge { display: none; }
-        
-        .card-title {
-            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-all; line-height: 1.3;
-        }
-        .grid-mode .card-title { font-size: 14px !important; margin-bottom: auto; }
-
+        .card-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-all; line-height: 1.3; }
         .platform-label { font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; border-left: 3px solid #888; margin-right: 4px; }
         .count-badge { font-size: 11px; background: var(--neon-pink); color: white; padding: 2px 8px; border-radius: 10px; }
         .tag-candidate { display: inline-block; background: #222; color: var(--neon-blue); padding: 5px 10px; border-radius: 12px; font-size: 12px; margin: 3px; border: 1px solid var(--neon-blue); cursor: pointer; }
-        
         .history-item { font-size: 12px; border-bottom: 1px solid #333; padding: 8px 0; }
     </style>
 </head>
@@ -100,58 +68,29 @@
                 <option value="📻 配信(その他)">📻 その他</option>
             </select>
             <input type="text" id="platform-extra" placeholder="サービス名入力" style="display:none;">
-            <input type="month" id="movie-date" onclick="this.showPicker()">
+            <input type="month" id="movie-date">
             <input type="number" id="movie-score" placeholder="点数" max="120">
         </div>
         <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
 
         <div class="roulette-container">
-    <div id="roulette-display">今夜、何を見る？</div>
-    <div style="margin-bottom: 10px;">
-        <select id="roulette-filter" style="width: auto; font-size: 13px; padding: 5px; margin-bottom: 5px; border-color: var(--neon-pink); color: var(--neon-pink);">
-            <option value="0">ALL（全作品から）</option>
-            <option value="120">🔥 120点のみ！</option>
-            <option value="100">✨ 100点以上</option>
-            <option value="90">👍 90点以上</option>
-        </select>
-    </div>
-    <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
-</div>
-
-<script>
-// startRoulette関数の中身をこれに書き換えてね
-window.startRoulette = () => {
-    const minScore = Number(document.getElementById('roulette-filter').value);
-    
-    // スコアでフィルタリング（各タイトルの最高スコアで判定）
-    const filteredPool = allMovies.filter(m => m.score >= minScore);
-
-    if (filteredPool.length === 0) {
-        const msg = minScore === 120 ? "120点の作品がまだないよ！" : minScore + "点以上の作品がないよ！";
-        return alert(msg);
-    }
-
-    const display = document.getElementById('roulette-display');
-    let count = 0;
-    const speed = 60;
-    const times = 15;
-
-    const timer = setInterval(() => {
-        const randomMovie = filteredPool[Math.floor(Math.random() * filteredPool.length)];
-        display.innerText = randomMovie.title;
-        count++;
-        if (count > times) {
-            clearInterval(timer);
-            const winner = filteredPool[Math.floor(Math.random() * filteredPool.length)];
-            display.innerHTML = `✨ 決定：<span style="font-size:22px; color:var(--neon-pink);">${winner.title}</span> ✨`;
-        }
-    }, speed);
-};
-</script>
-            <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()" style="margin-bottom:0; flex:1.5;">
+            <div id="roulette-display">今夜、何を見る？</div>
+            <div style="margin-bottom: 10px;">
+                <select id="roulette-filter" style="width: auto; font-size: 13px; padding: 5px; border-color: var(--neon-pink); color: var(--neon-pink); background:#111;">
+                    <option value="0">ALL（全作品）</option>
+                    <option value="120">🔥 120点のみ！</option>
+                    <option value="100">✨ 100点以上</option>
+                    <option value="90">👍 90点以上</option>
+                </select>
+            </div>
+            <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
         </div>
-        <div id="year-filter-container" class="filter-scroll"></div>
-        <div id="genre-filter-container" class="filter-scroll"></div>
+
+        <div class="controls" style="margin-top:20px;">
+            <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()">
+            <div id="year-filter-container" class="filter-scroll"></div>
+            <div id="genre-filter-container" class="filter-scroll"></div>
+        </div>
     </div>
 
     <div style="text-align:right; font-size:12px; color:var(--gold); margin-bottom:8px;">
@@ -165,6 +104,7 @@ window.startRoulette = () => {
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    // あなたのFirebase設定
     const firebaseConfig = {
         apiKey: "AIzaSyDGwwxmsvTu03gubuBAmEnOEl7K5DZpC5M",
         authDomain: "my-movie-theater-b7865.firebaseapp.com",
@@ -182,44 +122,38 @@ window.startRoulette = () => {
     let currentUser = null;
     let allMovies = [];
     let editingId = null;
-    let viewMode = 'card';
     window.selectedYear = "";
     window.selectedGenres = [];
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
 
-    // ルーレット機能
+    // フィルター対応ルーレット（ここがポイント！）
     window.startRoulette = () => {
-        if (allMovies.length === 0) return alert("まずは何か記録してね！");
+        const minScore = Number(document.getElementById('roulette-filter').value);
+        const filteredPool = allMovies.filter(m => m.score >= minScore);
+
+        if (filteredPool.length === 0) {
+            return alert(minScore === 0 ? "まずは記録してね！" : minScore + "点以上の作品がないよ！");
+        }
+
         const display = document.getElementById('roulette-display');
         let count = 0;
-        const speed = 60;
-        const times = 15;
-
         const timer = setInterval(() => {
-            const randomMovie = allMovies[Math.floor(Math.random() * allMovies.length)];
+            const randomMovie = filteredPool[Math.floor(Math.random() * filteredPool.length)];
             display.innerText = randomMovie.title;
             count++;
-            if (count > times) {
+            if (count > 15) {
                 clearInterval(timer);
-                const winner = allMovies[Math.floor(Math.random() * allMovies.length)];
-                display.innerHTML = `✨ 決定：<span style="font-size:22px; color:var(--neon-pink);">${winner.title}</span> ✨`;
+                const winner = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+                display.innerHTML = `✨ 決定：<span style="font-size:20px; color:var(--neon-pink);">${winner.title}</span> ✨`;
             }
-        }, speed);
+        }, 60);
     };
 
     window.toggleExtraInput = () => {
         const platform = document.getElementById('movie-platform').value;
         document.getElementById('platform-extra').style.display = (platform === '📻 配信(その他)') ? 'block' : 'none';
-    };
-
-    window.setViewMode = (mode) => {
-        viewMode = mode;
-        document.getElementById('view-card').classList.toggle('active', mode === 'card');
-        document.getElementById('view-grid').classList.toggle('active', mode === 'grid');
-        document.getElementById('movie-list').className = mode === 'grid' ? 'grid-mode' : '';
-        refreshDisplay();
     };
 
     onAuthStateChanged(auth, (user) => {
@@ -264,7 +198,6 @@ window.startRoulette = () => {
 
     window.refreshDisplay = () => {
         const list = document.getElementById('movie-list');
-        const sortOrder = document.getElementById('sort-order').value;
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
         const platformColors = { "Netflix": "#E50914", "U-NEXT": "#31A1EE", "Amazon": "#FF9900", "映画館": "#ffd700" };
@@ -293,11 +226,7 @@ window.startRoulette = () => {
         displayTitles.sort((a, b) => {
             const hA = groups[a].sort((x,y) => y.date.localeCompare(x.date));
             const hB = groups[b].sort((x,y) => y.date.localeCompare(x.date));
-            if (sortOrder === "date-desc") return hB[0].date.localeCompare(hA[0].date);
-            if (sortOrder === "date-asc") return hA[0].date.localeCompare(hB[0].date);
-            if (sortOrder === "score-desc") return Math.max(...hB.map(m=>m.score)) - Math.max(...hA.map(m=>m.score));
-            if (sortOrder === "title-asc") return a.localeCompare(b, 'ja');
-            return 0;
+            return hB[0].date.localeCompare(hA[0].date);
         });
 
         displayTitles.forEach(title => {
@@ -310,58 +239,27 @@ window.startRoulette = () => {
             card.className = 'card';
             card.style.borderTopColor = Math.max(...history.map(m=>m.score)) >= 120 ? "var(--gold)" : themeColor;
 
-            const historyListHtml = history.map((h, idx) => `
-                <div class="history-item">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span><small class="platform-label" style="border-left-color:${themeColor}">${h.platform}</small> <b>${history.length - idx}回目</b> (${h.date})</span>
-                        <span style="color:var(--gold); font-weight:bold;">${h.score}点</span>
-                    </div>
-                    <div style="color:#ccc; margin-top:4px; font-style:italic;">"${h.comment || ''}"</div>
-                    <div style="text-align:right; margin-top:5px;">
-                        <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; font-size:12px; cursor:pointer; border:none;">✏️</button>
-                        <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px; cursor:pointer; border:none;">🗑️</button>
-                    </div>
-                </div>
-            `).join("");
-
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div class="card-title" style="font-weight:bold; color:var(--gold); font-size:16px;">${title}</div>
                     <div class="count-badge">${history.length}回</div>
                 </div>
-                <div class="card-detail">
-                    <div style="margin:5px 0;">${(latest.tags || []).map(t => `<small style="color:var(--neon-blue); margin-right:8px;">#${t}</small>`).join("")}</div>
-                    <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin-top:5px;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px;">
-                            <span><small class="platform-label" style="border-left-color:${themeColor}">${latest.platform}</small> 最新</span>
-                            <span style="color:var(--gold); font-weight:bold;">${latest.score}点</span>
-                        </div>
-                        <div style="color:#ccc; font-size:12px; margin-top:4px; font-style:italic;">"${latest.comment || ''}"</div>
-                        
-                        ${history.length > 1 ? `
-                            <button onclick="toggleHistory('${latest.id}')" id="btn-${latest.id}" style="width:100%; background:none; border:none; color:#888; font-size:11px; margin-top:8px; cursor:pointer;">▼ 過去の履歴を表示</button>
-                            <div id="hist-${latest.id}" style="display:none; border-top:1px dashed #444; margin-top:8px;">${historyListHtml}</div>
-                        ` : `
-                            <div style="text-align:right; margin-top:8px;">
-                                <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px; cursor:pointer; border:none;">✏️</button>
-                                <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px; cursor:pointer; border:none;">🗑️</button>
-                            </div>
-                        `}
+                <div style="margin:5px 0;">${(latest.tags || []).map(t => `<small style="color:var(--neon-blue); margin-right:8px;">#${t}</small>`).join("")}</div>
+                <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin-top:5px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px;">
+                        <span><small class="platform-label" style="border-left-color:${themeColor}">${latest.platform}</small> ${latest.date}</span>
+                        <span style="color:var(--gold); font-weight:bold;">${latest.score}点</span>
+                    </div>
+                    <div style="color:#ccc; font-size:12px; margin-top:4px; font-style:italic;">"${latest.comment || ''}"</div>
+                    <div style="text-align:right; margin-top:8px;">
+                        <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px; cursor:pointer; border:none;">✏️</button>
+                        <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px; cursor:pointer; border:none;">🗑️</button>
                     </div>
                 </div>
-                ${viewMode === 'grid' ? `<div style="font-size:11px; color:var(--gold); margin-top:auto;">${latest.score}点</div>` : ''}
             `;
             list.appendChild(card);
         });
         document.getElementById('movie-count').innerText = displayTitles.length;
-    };
-
-    window.toggleHistory = (id) => {
-        const el = document.getElementById('hist-' + id);
-        const btn = document.getElementById('btn-' + id);
-        const isHidden = el.style.display === 'none';
-        el.style.display = isHidden ? 'block' : 'none';
-        btn.innerText = isHidden ? '▲ 履歴を閉じる' : '▼ 過去の履歴を表示';
     };
 
     window.addTagToInput = (tag) => {
