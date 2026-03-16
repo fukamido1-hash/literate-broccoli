@@ -88,10 +88,18 @@
         </div>
         <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
 
-        <div class="roulette-box">
-            <div id="roulette-display">今夜、何を見る？</div>
-            <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
-        </div>
+       <div class="roulette-box">
+    <div id="roulette-display">今夜、何を見る？</div>
+    <div style="margin-bottom: 10px; font-size: 14px;">
+        <select id="roulette-score-limit" style="width: auto; padding: 5px; margin: 0;">
+            <option value="0">0点以上 (すべて)</option>
+            <option value="60">60点以上 (安定)</option>
+            <option value="80">80点以上 (良作)</option>
+            <option value="100">100点以上 (神作)</option>
+        </select>
+    </div>
+    <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
+</div>
     </div>
 
     <div class="controls">
@@ -100,10 +108,11 @@
             <button id="view-grid" class="view-btn" onclick="setViewMode('grid')">📱 グリッド</button>
         </div>
         <div class="flex-row" style="margin-bottom:10px;">
-            <select id="sort-order" onchange="refreshDisplay()" style="margin-bottom:0; flex:1;">
-                <option value="date-desc">📅 最近観た順</option>
-                <option value="score-desc">🔥 点数順</option>
-            </select>
+            // 123行目あたり
+<select id="sort-order" onchange="refreshDisplay()" style="margin-bottom:0; flex:1;">
+    <option value="date-desc">📅 最近観た順</option>
+    <option value="date-asc">⏳ 古い順</option> <option value="score-desc">🔥 点数順</option>
+</select>
             <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()" style="margin-bottom:0; flex:1.5;">
         </div>
         <div id="year-filter-container" class="filter-scroll"></div>
@@ -139,19 +148,42 @@
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
 
-    window.startRoulette = () => {
-        if (allMovies.length === 0) return;
-        const display = document.getElementById('roulette-display');
-        let count = 0;
-        const interval = setInterval(() => {
-            display.innerText = allMovies[Math.floor(Math.random() * allMovies.length)].title;
-            if (++count > 20) {
-                clearInterval(interval);
-                const winner = allMovies[Math.floor(Math.random() * allMovies.length)];
-                display.innerHTML = `✨ 決定：<span style="color:var(--neon-pink);">${winner.title}</span>`;
-            }
-        }, 50);
-    };
+   window.startRoulette = () => {
+    const scoreLimit = Number(document.getElementById('roulette-score-limit').value);
+    
+    // 1. 今のフィルター（年やタグ）に合っている作品
+    // 2. かつ、選んだ点数以上の作品
+    // この2つの条件で絞り込むよ！
+    const targetList = allMovies.filter(m => {
+        const h = allMovies.filter(item => item.title === m.title);
+        const bestScore = Math.max(...h.map(item => item.score));
+        
+        // 年フィルターなどのチェック
+        const matchesYear = !window.selectedYear || m.date.startsWith(window.selectedYear);
+        const matchesGenre = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (m.tags || []).includes(g));
+        
+        return matchesYear && matchesGenre && bestScore >= scoreLimit;
+    });
+
+    // 重複を消してタイトルだけのリストにする
+    const uniqueTitles = [...new Set(targetList.map(m => m.title))];
+
+    const display = document.getElementById('roulette-display');
+    if (uniqueTitles.length === 0) {
+        display.innerText = "該等する作品がないよ！";
+        return;
+    }
+
+    let count = 0;
+    const interval = setInterval(() => {
+        display.innerText = uniqueTitles[Math.floor(Math.random() * uniqueTitles.length)];
+        if (++count > 20) {
+            clearInterval(interval);
+            const winner = uniqueTitles[Math.floor(Math.random() * uniqueTitles.length)];
+            display.innerHTML = `✨ 決定：<span style="color:var(--neon-pink);">${winner}</span>`;
+        }
+    }, 50);
+};
 
     window.setViewMode = (mode) => {
         viewMode = mode;
