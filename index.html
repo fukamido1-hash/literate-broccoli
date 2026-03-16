@@ -70,14 +70,19 @@
         <div id="tag-cloud"></div>
         <textarea id="movie-comment" placeholder="感想・メモ..." rows="2"></textarea>
         <div class="flex-row">
-            <select id="movie-platform" onchange="toggleExtraInput()">
-                <option value="🎥 映画館">🎥 映画館</option>
-                <option value="🔴 Netflix">🔴 Netflix</option>
-                <option value="🔵 U-NEXT">🔵 U-NEXT</option>
-                <option value="🟠 Amazonプライム">🟠 Amazon</option>
-                <option value="📺 地上波/BS">📺 地上波</option>
-                <option value="📀 円盤/その他">📀 円盤/他</option>
-            </select>
+         <select id="movie-platform">
+    <option value="🎥 映画館">🎥 映画館</option>
+    <option value="🔴 Netflix">🔴 Netflix</option>
+    <option value="🔵 U-NEXT">🔵 U-NEXT</option>
+    <option value="🟠 Amazonプライム">🟠 Amazon</option>
+    <option value="🟢 Hulu">🟢 Hulu</option> <option value="🔵 ディズニープラス">🔵 Disney+</option> <option value="🔴 FOD">🔴 FOD</option>
+    <option value="🟡 dアニメストア">🟡 dアニメ</option>
+    <option value="🟢 ABEMA">🟢 ABEMA</option>
+    <option value="🍎 Apple TV+">🍎 Apple</option>
+    <option value="📺 地上波/BS">📺 地上波</option>
+    <option value="💿 DVD/BD">💿 円盤</option>
+    <option value="📻 配信(その他)">📻 その他</option>
+</select>
             <input type="month" id="movie-date">
             <input type="number" id="movie-score" placeholder="点数 (MAX 120)" max="120">
         </div>
@@ -232,12 +237,12 @@
             const latest = history[0];
             const bestScore = Math.max(...history.map(m=>m.score));
 
-            // 🏆 点数で色分け！
-            let borderStyle = "linear-gradient(90deg, #444 0%, #111 100%)";
-            if (bestScore >= 120) borderStyle = "linear-gradient(45deg, #BF953F, #FCF6BA, #B38728)";
-            else if (bestScore >= 100) borderStyle = "var(--neon-pink)";
-            else if (bestScore >= 80) borderStyle = "var(--neon-blue)";
-            else if (bestScore >= 60) borderStyle = "var(--good-green)";
+          // 🏆 「作品の上の色」を点数で決定！
+let topColor = "#444"; // どの条件にも当てはまらない時の色
+if (bestScore >= 120) topColor = "var(--gold)";     // 120点以上の色
+else if (bestScore >= 100) topColor = "var(--neon-pink)"; // 100点以上の色
+else if (bestScore >= 80) topColor = "var(--neon-blue)";  // 80点以上の色
+else if (bestScore >= 60) topColor = "var(--good-green)"; // 60点以上の色
             
             const card = document.createElement('div');
             card.className = 'card';
