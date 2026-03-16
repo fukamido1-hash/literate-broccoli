@@ -106,7 +106,8 @@
             <button class="cat-btn" onclick="selectCat(this, '📺 ドラマ')">📺 ドラマ</button>
         </div>
         
-<select id="movie-select" onchange="selectFromHistory()">
+<input type="text" id="movie-select" list="movie-options" placeholder="🔍 過去作から検索・自動入力" oninput="selectFromHistory()" style="margin-bottom:15px;">
+<datalist id="movie-options"></datalist>
         <option value="">-- 過去作から自動入力 --</option>
     </select>
         <div class="flex-row">
@@ -351,7 +352,11 @@ document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `
           style="user-select:none;">
         #${tag}
     </span>`).join("");
-        document.getElementById('movie-select').innerHTML = '<option value="">-- 過去作から自動入力 --</option>' + [...new Set(allMovies.map(m => m.title))].sort().map(t => `<option value="${t}">${t}</option>`).join("");
+        // 過去作リスト（datalist）の中身を作る
+        const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
+        document.getElementById('movie-options').innerHTML = uniqueTitles
+            .map(t => `<option value="${t}">`)
+            .join("");
 
         let groups = {};
         allMovies.forEach(m => { if (!groups[m.title]) groups[m.title] = []; groups[m.title].push(m); });
