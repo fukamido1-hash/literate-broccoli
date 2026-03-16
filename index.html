@@ -33,8 +33,14 @@
         #movie-list { display: grid; gap: 15px; }
         #movie-list.grid-mode { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
         .card { background: #252525; border-radius: 12px; padding: 15px; position: relative; border: solid 3px transparent; background-clip: padding-box; }
-        .grid-mode .card { padding: 12px; text-align: center; height: 110px; display: flex; flex-direction: column; }
-        .grid-mode .card .card-detail, .grid-mode .count-badge { display: none; }
+        .grid-mode .card { 
+    padding: 12px; 
+    text-align: center; 
+    height: 120px; /* ちょっと高くして押しやすく！ */
+    display: flex; 
+    flex-direction: column; 
+    cursor: pointer; /* マウスを置いたら指のマークにする */
+}.grid-mode .card .card-detail, .grid-mode .count-badge { display: none; }
         .card-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; word-break: break-all; line-height: 1.3; font-weight: bold; color: var(--gold); font-size: 16px; }
         .grid-mode .card-title { font-size: 14px !important; margin-bottom: auto; }
 
@@ -380,7 +386,13 @@ document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `
             // 🎬 カードを作成（ここを1回だけに整理！）
             const card = document.createElement('div');
             card.className = 'card';
-            card.style.borderTop = `6px solid ${topColor}`; 
+card.style.borderTop = `6px solid ${topColor}`;
+
+// ↓ これを追加！グリッドのときはカードを叩くと編集できるようにする
+if (viewMode === 'grid') {
+    card.style.cursor = 'pointer';
+    card.onclick = () => editMovie(latest.id);
+}
             
             const createHistoryItem = (h) => `
                 <div class="history-item">
