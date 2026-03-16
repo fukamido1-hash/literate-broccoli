@@ -96,38 +96,23 @@
         <div class="category-container" id="category-selector">
             <button class="cat-btn active" onclick="selectCat(this, '🎬 映画')">🎬 映画</button>
             <button class="cat-btn" onclick="selectCat(this, '🎥 アニメ')">🎥 アニメ</button>
-            <button class="cat-btn" onclick="selectCat(this, '🌟 アニ映画')">🌟 アニ映画</button>
+            <button class="cat-btn" onclick="selectCat(this, '🌟 アニメ映画')">🌟 アニメ映画</button>
             <button class="cat-btn" onclick="selectCat(this, '📺 ドラマ')">📺 ドラマ</button>
         </div>
         
-        <select id="movie-select" onchange="selectFromHistory()"><option value="">-- 過去作から自動入力 --</option></select>
-        ```
-
-### 3. JavaScript（ボタンを動かすコード）
-`<script>` の中（`window.login` とかがあるあたり）にこれを足してね。
-
-```javascript
-    // 今どのカテゴリーを選んでいるか保存する変数
-    let selectedCategory = "🎬 映画";
-
-    window.selectCat = (btn, cat) => {
-        // 全部のボタンから active を消す
-        document.querySelectorAll('#category-selector .cat-btn').forEach(b => b.classList.remove('active'));
-        // 押したボタンだけ active にする
-        btn.classList.add('active');
-        // 選んだ文字を変数に入れる
-        selectedCategory = cat;
-    };
-    <div class="input-form">
-        <select id="movie-select" onchange="selectFromHistory()"><option value="">-- 過去作から自動入力 --</option></select>
+<select id="movie-select" onchange="selectFromHistory()">
+        <option value="">-- 過去作から自動入力 --</option>
+    </select>
         <div class="flex-row">
             <input type="text" id="movie-title" placeholder="タイトル">
             <input type="text" id="movie-tags" placeholder="🏷 タグ (半角スペース区切り)">
         </div>
         <div id="tag-cloud"></div>
         <textarea id="movie-comment" placeholder="感想・メモ..." rows="2"></textarea>
-        <div class="flex-row">
+    
+    　　　<div class="flex-row">
          <select id="movie-platform">
+             
     <option value="🎥 映画館">🎥 映画館</option>
     <option value="🔴 Netflix">🔴 Netflix</option>
     <option value="🔵 U-NEXT">🔵 U-NEXT</option>
@@ -146,7 +131,7 @@
         <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
 
        <div class="roulette-box">
-    <div id="roulette-display">今夜、何を見る？</div>
+    <div id="roulette-display">今日は何を見る？</div>
     <div style="margin-bottom: 10px; font-size: 14px;">
         <select id="roulette-score-limit" style="width: auto; padding: 5px; margin: 0;">
             <option value="0">すべて</option>
@@ -174,8 +159,8 @@
 </select>
             <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()" style="margin-bottom:0; flex:1.5;">
         </div>
-        <div id="year-filter-container" class="filter-scroll"></div>
-        <div id="genre-filter-container" class="filter-scroll"></div>
+        <div id="category-filter-container" class="filter-scroll"></div> <div id="year-filter-container" class="filter-scroll"></div>
+<div id="genre-filter-container" class="filter-scroll"></div>
     </div>
 
     <div style="text-align:right; font-size:12px; color:var(--gold); margin-bottom:8px;"><span id="movie-count">0</span>作品</div>
@@ -183,6 +168,13 @@
 </div>
 
 <script type="module">
+    // 1. データの入れ物（変数）
+    let selectedCategory = "🎬 映画"; 
+    let selectedCategoryFilter = ""; 
+    window.selectedYear = "";        
+    window.selectedGenres = [];      
+
+    // 2. 外部機能（Firebase）の読み込み
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -202,10 +194,23 @@
     const provider = new GoogleAuthProvider();
 
     let currentUser = null, allMovies = [], editingId = null, viewMode = 'card';
-    window.selectedYear = ""; window.selectedGenres = [];
 
+    // 3. ボタン操作などの関数
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
+
+    // カテゴリー選択（入力用）
+    window.selectCat = (btn, cat) => {
+        document.querySelectorAll('#category-selector .cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedCategory = cat; 
+    };
+
+    // カテゴリー絞り込み（リスト用）
+    window.filterByCat = (c) => {
+        selectedCategoryFilter = c;
+        refreshDisplay();
+    };
 
    window.startRoulette = () => {
     const scoreLimit = Number(document.getElementById('roulette-score-limit').value);
@@ -287,10 +292,15 @@
     window.addMovie = async () => {
         const title = document.getElementById('movie-title').value.trim();
         const date = document.getElementById('movie-date').value;
-        if (!title || !date) return alert("入力してね！");
         
+        if (!title || !date) return alert("入力してね！");
+
+        // データを1つのカタマリにまとめる（categoryも忘れずに！）
         const data = {
-            uid: currentUser.uid, title, date,
+            uid: currentUser.uid, 
+            title: title, 
+            date: date, 
+            category: selectedCategory, 
             tags: document.getElementById('movie-tags').value.split(/[\s,、]+/).filter(t => t),
             score: Number(document.getElementById('movie-score').value) || 0,
             comment: document.getElementById('movie-comment').value,
@@ -298,8 +308,14 @@
             updatedAt: Date.now()
         };
 
-        if (editingId) { await updateDoc(doc(db, "movies", editingId), data); editingId = null; }
-        else { data.createdAt = Date.now(); await addDoc(collection(db, "movies"), data); }
+        if (editingId) { 
+            await updateDoc(doc(db, "movies", editingId), data); 
+            editingId = null; 
+        } else { 
+            data.createdAt = Date.now(); 
+            await addDoc(collection(db, "movies"), data); 
+        }
+        
         resetForm();
     };
 
@@ -310,7 +326,14 @@
         list.innerHTML = "";
 
         // 年・タグフィルターの生成
-        const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
+        // カテゴリーボタンを自動生成（追加！）
+const allCats = [...new Set(allMovies.map(m => m.category || "🎬 映画"))];
+document.getElementById('category-filter-container').innerHTML = 
+    `<button onclick="filterByCat('')" class="filter-btn ${selectedCategoryFilter === '' ? 'active' : ''}">全ジャンル</button>` + 
+    allCats.map(c => `<button onclick="filterByCat('${c}')" class="filter-btn ${selectedCategoryFilter === c ? 'active' : ''}">${c}</button>`).join("");
+
+// (この下に、元からあった年のボタンを作るコードが続く)
+const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
         document.getElementById('year-filter-container').innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>` + allYears.map(y => `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`).join("");
         const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
         document.getElementById('genre-filter-container').innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全タグ</button>` + allTags.map(g => `<button onclick="filterByGenre('${g}')" class="filter-btn ${window.selectedGenres.includes(g) ? 'active' : ''}">#${g}</button>`).join("");
@@ -321,11 +344,12 @@
         allMovies.forEach(m => { if (!groups[m.title]) groups[m.title] = []; groups[m.title].push(m); });
 
         let titles = Object.keys(groups).filter(t => {
-            const h = groups[t];
-            return (!window.selectedYear || h.some(m => m.date.startsWith(window.selectedYear))) && 
-                   (window.selectedGenres.length === 0 || window.selectedGenres.every(g => h.some(m => (m.tags || []).includes(g)))) && 
-                   (t.toLowerCase().includes(qSearch) || h.some(m => (m.tags || []).some(tag => tag.toLowerCase().includes(qSearch))));
-        });
+    const h = groups[t];
+    return (!selectedCategoryFilter || h.some(m => m.category === selectedCategoryFilter)) && // ←これを追加！
+           (!window.selectedYear || h.some(m => m.date.startsWith(window.selectedYear))) && 
+           (window.selectedGenres.length === 0 || window.selectedGenres.every(g => h.some(m => (m.tags || []).includes(g)))) && 
+           (t.toLowerCase().includes(qSearch) || h.some(m => (m.tags || []).some(tag => tag.toLowerCase().includes(qSearch))));
+});
 
         titles.sort((a, b) => {
             const hA = groups[a].sort((x,y) => y.date.localeCompare(x.date));
@@ -412,6 +436,7 @@
         document.getElementById('movie-title').value = ""; document.getElementById('movie-tags').value = "";
         document.getElementById('movie-score').value = ""; document.getElementById('movie-comment').value = "";
         document.getElementById('save-btn').innerText = "💾 記録を保存"; editingId = null;
+    };
     };
 </script>
 </body>
