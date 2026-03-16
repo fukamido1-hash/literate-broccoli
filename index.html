@@ -84,6 +84,19 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
             font-weight: bold;
         }
+        /* カレンダーのアイコン（カレンダーマーク）を強制表示して白くする */
+input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* 黒背景で見えるように白く反転 */
+    background-color: rgba(255, 255, 255, 0.1); /* ほんのり背景をつける */
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* PCで入力欄全体をクリックしてもカレンダーが開くようにする */
+input[type="month"] {
+    position: relative;
+}
     </style>
 </head>
 <body>
@@ -137,7 +150,23 @@
 
         <div style="flex: 1;">
             <label style="font-size:11px; color:#888;">視聴月（カレンダー）</label>
-            <input type="month" id="movie-date" style="background: #222; color: #fff; border: 1px solid var(--neon-pink); padding: 10px 5px;">
+          <div class="flex-row" style="align-items: flex-end;">
+    <div style="flex: 1;">
+        <select id="movie-platform">
+             <option value="🎥 映画館">🎥 映画館</option>
+             <option value="🔴 Netflix">🔴 Netflix</option>
+             </select>
+    </div>
+
+    <div style="flex: 1;">
+        <label for="movie-date" style="font-size:11px; color:#888; display:block;">視聴月をクリック↓</label>
+        <input type="month" id="movie-date" style="background: #222; color: #fff; border: 1px solid var(--neon-pink); height: 45px; padding: 5px; width: 100%; cursor: pointer;">
+    </div>
+
+    <div style="flex: 0.5;">
+        <input type="number" id="movie-score" placeholder="点数" max="120">
+    </div>
+</div>
         </div>
 
         <div style="flex: 0.5;">
