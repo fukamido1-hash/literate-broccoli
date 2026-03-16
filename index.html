@@ -337,7 +337,14 @@ const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().r
         document.getElementById('year-filter-container').innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>` + allYears.map(y => `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`).join("");
         const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
         document.getElementById('genre-filter-container').innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全タグ</button>` + allTags.map(g => `<button onclick="filterByGenre('${g}')" class="filter-btn ${window.selectedGenres.includes(g) ? 'active' : ''}">#${g}</button>`).join("");
-        document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `<span class="tag-candidate" onclick="addTagToInput('${tag}')">#${tag}</span>`).join("");
+        // ↓ ここを丸ごと入れ替え！
+document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `
+    <span class="tag-candidate" 
+          onclick="addTagToInput('${tag}')" 
+          oncontextmenu="deleteTagGlobally('${tag}'); return false;" 
+          style="user-select:none;">
+        #${tag}
+    </span>`).join("");
         document.getElementById('movie-select').innerHTML = '<option value="">-- 過去作から自動入力 --</option>' + [...new Set(allMovies.map(m => m.title))].sort().map(t => `<option value="${t}">${t}</option>`).join("");
 
         let groups = {};
@@ -437,6 +444,21 @@ const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().r
         document.getElementById('movie-score').value = ""; document.getElementById('movie-comment').value = "";
         document.getElementById('save-btn').innerText = "💾 記録を保存"; editingId = null;
     };
+    window.deleteTagGlobally = async (tag) => {
+    if (!confirm(`全データからタグ「#${tag}」を完全に消去してもいい？\n(間違えて登録したタグを掃除する機能だよ！)`)) return;
+
+    // そのタグが含まれている作品を全部探す
+    const targets = allMovies.filter(m => (m.tags || []).includes(tag));
+    
+    // 見つかった作品から、そのタグだけを取り除いて上書き更新する
+    const promises = targets.map(m => {
+        const newTags = m.tags.filter(t => t !== tag);
+        return updateDoc(doc(db, "movies", m.id), { tags: newTags });
+    });
+
+    await Promise.all(promises);
+    alert(`「#${tag}」の掃除が終わったよ！`);
+};
 </script>
 </body>
 </html>
