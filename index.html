@@ -152,30 +152,41 @@
 
    window.startRoulette = () => {
     const scoreLimit = Number(document.getElementById('roulette-score-limit').value);
+    const qSearch = document.getElementById('search-input').value.toLowerCase();
     
-    // 1. 今のフィルター（年やタグ）に合っている作品
-    // 2. かつ、選んだ点数以上の作品
-    // この2つの条件で絞り込むよ！
-    const targetList = allMovies.filter(m => {
-        const h = allMovies.filter(item => item.title === m.title);
-        const bestScore = Math.max(...h.map(item => item.score));
-        
-        // 年フィルターなどのチェック
+    // 💡 「今、画面に見えているはずの作品」と同じ条件で絞り込むよ！
+    const filteredMovies = allMovies.filter(m => {
+        // 1. 年フィルターとの連動
         const matchesYear = !window.selectedYear || m.date.startsWith(window.selectedYear);
-        const matchesGenre = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (m.tags || []).includes(g));
         
-        return matchesYear && matchesGenre && bestScore >= scoreLimit;
+        // 2. タグフィルターとの連動
+        const matchesGenre = window.selectedGenres.length === 0 || 
+                             window.selectedGenres.every(g => (m.tags || []).includes(g));
+        
+        // 3. 検索ワードとの連動
+        const matchesSearch = !qSearch || 
+                              m.title.toLowerCase().includes(qSearch) || 
+                              (m.tags || []).some(tag => tag.toLowerCase().includes(qSearch));
+        
+        // 4. 点数フィルターとの連動
+        // 同じタイトルの最高得点をチェック
+        const titleHistory = allMovies.filter(item => item.title === m.title);
+        const bestScore = Math.max(...titleHistory.map(item => item.score));
+        const matchesScore = bestScore >= scoreLimit;
+
+        return matchesYear && matchesGenre && matchesSearch && matchesScore;
     });
 
-    // 重複を消してタイトルだけのリストにする
-    const uniqueTitles = [...new Set(targetList.map(m => m.title))];
+    // タイトルの重複を削る
+    const uniqueTitles = [...new Set(filteredMovies.map(m => m.title))];
 
     const display = document.getElementById('roulette-display');
     if (uniqueTitles.length === 0) {
-        display.innerText = "該等する作品がないよ！";
+        display.innerText = "条件に合う作品がないよ！";
         return;
     }
 
+    // 演出開始！
     let count = 0;
     const interval = setInterval(() => {
         display.innerText = uniqueTitles[Math.floor(Math.random() * uniqueTitles.length)];
