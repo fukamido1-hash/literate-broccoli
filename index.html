@@ -34,7 +34,7 @@
         .flash-effect { animation: flash 0.2s ease-out 5; }
         @keyframes flash { 0%, 100% { background: #000; } 50% { background: var(--gold); color: #000; } }
 
-        /* 作品一覧グリッド（ここが重要！） */
+        /* 作品一覧グリッド */
         .movie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; justify-items: center; margin-top: 20px; }
         .card { background: #252525; border: 1px solid #333; padding: 15px; width: 100%; max-width: 350px; border-radius: 5px; border-top: 8px solid #444; box-shadow: 5px 5px 0px #000; }
         .tag { background: #2980b9; color: white; font-size: 11px; padding: 3px 8px; border-radius: 10px; margin-right: 5px; }
@@ -97,7 +97,10 @@
     <div id="year-filter-container" style="text-align: center; margin-bottom: 10px;"></div>
     <div id="genre-filter-container" style="text-align: center; margin-bottom: 15px;"></div>
 
-    <input type="text" id="search-input" placeholder="🔍 名前、感想、タグで検索..." oninput="refreshDisplay()" style="margin-bottom: 25px;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+        <input type="text" id="search-input" placeholder="🔍 名前、感想、タグで検索..." oninput="refreshDisplay()" style="margin-bottom: 0;">
+        <span id="movie-count" style="white-space: nowrap; font-size: 12px; color: var(--gold); border: 1px solid #444; padding: 8px; border-radius: 5px;">0本</span>
+    </div>
     
     <div id="movie-list" class="movie-grid"></div>
 </div>
@@ -125,7 +128,7 @@
     let allMovies = [];
     let editingId = null;
     window.selectedYear = "";
-    window.selectedGenres = []; // 複数のジャンルを保存する配列に変更
+    window.selectedGenres = [];
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -178,7 +181,6 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        // --- 1. 年代フィルタボタンの生成 ---
         const yearContainer = document.getElementById('year-filter-container');
         const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
         yearContainer.innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>`;
@@ -186,22 +188,15 @@
             yearContainer.innerHTML += `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`;
         });
 
-        // --- 2. ジャンルボタンの生成（★複数選択版に改造！） ---
         const genreContainer = document.getElementById('genre-filter-container');
         const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
-        
-        // window.selectedGenres が未定義なら空配列にする（エラー防止）
         if (!window.selectedGenres) window.selectedGenres = [];
-
-        // 「全ジャンル」ボタン
         genreContainer.innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全ジャンル</button>`;
-        
         allTags.forEach(g => {
             const isActive = window.selectedGenres.includes(g);
             genreContainer.innerHTML += `<button onclick="filterByGenre('${g}')" class="filter-btn ${isActive ? 'active' : ''}">#${g}</button>`;
         });
 
-        // --- 3. タグ入力補助（クリックで入力欄に足すやつ） ---
         const tagCloud = document.getElementById('tag-cloud');
         tagCloud.innerHTML = "";
         allTags.forEach(tag => {
@@ -214,34 +209,31 @@
             tagCloud.appendChild(span);
         });
 
-        // --- 4. 過去作セレクトボックスの更新 ---
         const sel = document.getElementById('movie-select');
         const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
         sel.innerHTML = '<option value="">-- 過去作から選ぶ --</option>';
         uniqueTitles.forEach(t => sel.innerHTML += `<option value="${t}">${t}</option>`);
 
-        // --- 5. データのグループ化と表示 ---
         const groups = {};
         allMovies.forEach(m => {
             if (!groups[m.title]) groups[m.title] = [];
             groups[m.title].push(m);
         });
 
+        let displayCount = 0; // 表示件数カウンター
+
         Object.keys(groups).forEach(title => {
             const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
             const latest = history[0];
 
-            // 【絞り込みロジック】
             const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
-            
-            // ★複数ジャンル一致チェック（選んだタグが全部含まれているか）
             const genreMatch = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (latest.tags || []).includes(g));
-            
             const textMatch = !qSearch || title.toLowerCase().includes(qSearch) || (latest.comment || "").toLowerCase().includes(qSearch);
 
             if (!yearMatch || !genreMatch || !textMatch) return;
 
-            // カードの描画
+            displayCount++; // 表示される場合にカウントアップ
+
             const card = document.createElement('div');
             card.className = 'card';
             const maxScore = Math.max(...history.map(h => h.score));
@@ -266,7 +258,10 @@
                     `).join("")}
                 </div>
             `;
-            list
+            list.appendChild(card);
+        });
+        document.getElementById('movie-count').innerText = displayCount + "本";
+    };
 
     window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
     window.filterByGenre = (genre) => {
@@ -275,23 +270,20 @@
         } else {
             const index = window.selectedGenres.indexOf(genre);
             if (index > -1) {
-                // すでに選択されてたら解除
                 window.selectedGenres.splice(index, 1);
             } else {
-                // 選択されてなければ追加
                 window.selectedGenres.push(genre);
             }
         }
         refreshDisplay();
     };
+
     window.startRoulette = () => {
         const mode = Number(document.getElementById('roulette-mode').value);
         let candidates = allMovies;
         if (mode > 0) candidates = allMovies.filter(m => m.score >= mode);
-        if (mode === 120) candidates = allMovies.filter(m => m.score === 120);
-
         const res = document.getElementById('roulette-result');
-        if (candidates.length === 0) return alert("条件に合う作品がないよ！");
+        if (candidates.length === 0) return alert("作品がないよ！");
         let c = 0;
         const spin = () => {
             res.innerText = candidates[Math.floor(Math.random() * candidates.length)].title;
