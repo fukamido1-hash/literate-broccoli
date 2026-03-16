@@ -237,20 +237,17 @@
             const latest = history[0];
             const bestScore = Math.max(...history.map(m=>m.score));
 
-          // 🏆 「作品の上の色」を点数で決定！
-let topColor = "#444"; // どの条件にも当てはまらない時の色
-if (bestScore >= 120) topColor = "var(--gold)";     // 120点以上の色
-else if (bestScore >= 100) topColor = "var(--neon-pink)"; // 100点以上の色
-else if (bestScore >= 80) topColor = "var(--neon-blue)";  // 80点以上の色
-else if (bestScore >= 60) topColor = "var(--good-green)"; // 60点以上の色
+            // 🏆 点数で色を決定
+            let topColor = "#444"; 
+            if (bestScore >= 120) topColor = "var(--gold)";
+            else if (bestScore >= 100) topColor = "var(--neon-pink)";
+            else if (bestScore >= 80) topColor = "var(--neon-blue)";
+            else if (bestScore >= 60) topColor = "var(--good-green)";
             
+            // 🎬 カードを作成（ここを1回だけに整理！）
             const card = document.createElement('div');
             card.className = 'card';
-            
-            const borderBg = document.createElement('div');
-            borderBg.className = 'card-border-bg';
-            borderBg.style.background = borderStyle;
-            card.appendChild(borderBg);
+            card.style.borderTop = `6px solid ${topColor}`; 
             
             const createHistoryItem = (h) => `
                 <div class="history-item">
@@ -265,7 +262,7 @@ else if (bestScore >= 60) topColor = "var(--good-green)"; // 60点以上の色
                     </div>
                 </div>`;
 
-            card.innerHTML += `
+            card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:start;"><div class="card-title">${t}</div><div class="count-badge">${history.length}回</div></div>
                 <div class="card-detail">
                     <div style="margin:5px 0;">${(latest.tags || []).map(tag => `<small style="color:var(--neon-blue); margin-right:8px;">#${tag}</small>`).join("")}</div>
