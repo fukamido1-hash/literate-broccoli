@@ -442,10 +442,15 @@ if (viewMode === 'grid') {
         if (group.length > 0) document.getElementById('movie-tags').value = (group[0].tags || []).join(" ");
     };
    window.editMovie = (id) => {
+        // ★重要：一度リフレッシュして、他に開いている編集画面を全部閉じる！
+        if (editingId && editingId !== id) {
+            refreshDisplay(); 
+        }
+
         const m = allMovies.find(d => d.id === id); if (!m) return;
         editingId = id; 
-        
-        // 入力フォームにも値をセット
+
+        // フォーム同期（一応やっておく）
         document.getElementById('movie-title').value = m.title;
         document.getElementById('movie-tags').value = (m.tags || []).join(" ");
         document.getElementById('movie-date').value = m.date;
@@ -455,50 +460,68 @@ if (viewMode === 'grid') {
 
         const card = document.querySelector(`[data-id="${id}"]`);
         if (card) {
-            // ★グリッド表示の時だけ、横幅をいっぱいに広げるスタイルを当てる
             if (viewMode === 'grid') {
-                card.style.gridColumn = "1 / -1"; // 横いっぱいに広がる
-                card.style.height = "auto";       // 高さを自由にする
+                card.style.gridColumn = "1 / -1";
+                card.style.height = "auto";
             }
 
             card.innerHTML = `
-                <div style="background:#1a1a1a; padding:20px; border-radius:15px; border:2px solid var(--neon-blue); box-shadow: 0 0 20px rgba(0,255,255,0.2); width:100%; box-sizing:border-box;">
-                    <div style="font-size:14px; color:var(--gold); margin-bottom:12px; font-weight:bold; display:flex; justify-content:space-between;">
-                        <span>📝 クイック編集モード</span>
-                        <span>${m.title}</span>
+                <div style="background:#1a1a1a; padding:20px; border-radius:15px; border:2px solid var(--neon-pink); box-shadow: 0 0 20px rgba(255,0,255,0.2); width:100%; box-sizing:border-box;">
+                    <div style="font-size:16px; color:var(--gold); margin-bottom:15px; font-weight:bold; border-bottom:1px solid #444; padding-bottom:10px;">
+                        🎬 クイック編集：${m.title}
                     </div>
                     
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:11px; color:#888;">カテゴリー</label>
+                            <select id="edit-cat-${id}" style="margin:0; background:#000;">
+                                <option value="🎬 映画" ${m.category === '🎬 映画' ? 'selected' : ''}>🎬 映画</option>
+                                <option value="🎥 アニメ" ${m.category === '🎥 アニメ' ? 'selected' : ''}>🎥 アニメ</option>
+                                <option value="🌟 アニメ映画" ${m.category === '🌟 アニメ映画' ? 'selected' : ''}>🌟 アニメ映画</option>
+                                <option value="📺 ドラマ" ${m.category === '📺 ドラマ' ? 'selected' : ''}>📺 ドラマ</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:11px; color:#888;">点数</label>
+                            <input type="number" id="edit-score-${id}" value="${m.score}" style="margin:0; background:#000; font-size:18px; color:var(--gold);">
+                        </div>
+                    </div>
+
                     <div style="margin-bottom:10px;">
-                        <label style="font-size:11px; color:#888;">点数 (MAX 120)</label>
-                        <input type="number" id="edit-score-${id}" value="${m.score}" style="font-size:20px; padding:10px; background:#000; border:1px solid #444;">
+                        <label style="font-size:11px; color:#888;">タグ (半角スペース区切り)</label>
+                        <input type="text" id="edit-tags-${id}" value="${(m.tags || []).join(" ")}" style="background:#000;">
                     </div>
 
                     <div style="margin-bottom:15px;">
-                        <label style="font-size:11px; color:#888;">感想・メモ</label>
-                        <textarea id="edit-comment-${id}" style="font-size:16px; height:120px; line-height:1.5; padding:12px; background:#000; border:1px solid #444;">${m.comment || ''}</textarea>
+                        <label style="font-size:11px; color:#888;">感想</label>
+                        <textarea id="edit-comment-${id}" style="font-size:14px; height:100px; background:#000; border:1px solid #444;">${m.comment || ''}</textarea>
                     </div>
 
                     <div style="display:flex; gap:10px;">
-                        <button onclick="quickSave('${id}')" style="flex:2; background:var(--neon-blue); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold; font-size:16px;">✅ 保存して閉じる</button>
-                        <button onclick="editingId=null; refreshDisplay()" style="flex:1; background:#444; color:white; border:none; padding:15px; border-radius:10px;">キャンセル</button>
+                        <button onclick="quickSave('${id}')" style="flex:2; background:var(--neon-pink); color:white; border:none; padding:15px; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer;">✅ 保存する</button>
+                        <button onclick="editingId=null; refreshDisplay()" style="flex:1; background:#444; color:white; border:none; padding:15px; border-radius:10px; cursor:pointer;">戻る</button>
                     </div>
                 </div>
             `;
-            // 編集画面が見えるようにスクロール
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     };
     window.quickSave = async (id) => {
         const newScore = Number(document.getElementById(`edit-score-${id}`).value);
         const newComment = document.getElementById(`edit-comment-${id}`).value;
+        const newCat = document.getElementById(`edit-cat-${id}`).value;
+        const newTags = document.getElementById(`edit-tags-${id}`).value.split(/[\s,、]+/).filter(t => t);
 
         try {
             await updateDoc(doc(db, "movies", id), {
                 score: newScore,
                 comment: newComment,
+                category: newCat,
+                tags: newTags,
                 updatedAt: Date.now()
             });
-            // 保存が終わると自動で refreshDisplay が走るから、勝手に元のカード表示に戻るよ！
+            editingId = null; // 保存したら編集モード解除！
+            // refreshDisplayはonSnapshotが自動でやってくれるよ
         } catch (e) {
             alert("保存に失敗しちゃった。もう一回試してみて！");
         }
