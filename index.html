@@ -442,32 +442,52 @@ if (viewMode === 'grid') {
         if (group.length > 0) document.getElementById('movie-tags').value = (group[0].tags || []).join(" ");
     };
    window.editMovie = (id) => {
-    const m = allMovies.find(d => d.id === id); if (!m) return;
-    editingId = id; 
-    
-    // 一番上のフォームにも念のため入れる（スクロールはしない）
-    document.getElementById('movie-title').value = m.title;
-    document.getElementById('movie-tags').value = (m.tags || []).join(" ");
-    document.getElementById('movie-date').value = m.date;
-    document.getElementById('movie-score').value = m.score;
-    document.getElementById('movie-comment').value = m.comment;
-    document.getElementById('movie-platform').value = m.platform;
+        const m = allMovies.find(d => d.id === id); if (!m) return;
+        editingId = id; 
+        
+        // 入力フォームにも値をセット
+        document.getElementById('movie-title').value = m.title;
+        document.getElementById('movie-tags').value = (m.tags || []).join(" ");
+        document.getElementById('movie-date').value = m.date;
+        document.getElementById('movie-score').value = m.score;
+        document.getElementById('movie-comment').value = m.comment;
+        document.getElementById('movie-platform').value = m.platform;
 
-    // ★【ここがポイント】カードをその場で入力欄に変身させる
-    const card = document.querySelector(`[data-id="${id}"]`);
-    if (card) {
-        card.innerHTML = `
-            <div style="background:#111; padding:10px; border-radius:10px; border:1px solid var(--neon-blue);">
-                <div style="font-size:12px; color:var(--gold); margin-bottom:5px;">その場でクイック編集</div>
-                <input type="number" id="edit-score-${id}" value="${m.score}" style="width:100%; margin-bottom:8px;" placeholder="点数">
-                <textarea id="edit-comment-${id}" style="font-size:12px; height:60px; margin-bottom:8px;">${m.comment || ''}</textarea>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="quickSave('${id}')" style="flex:1; background:var(--neon-blue); color:white; border:none; padding:8px; border-radius:5px; font-weight:bold;">完了</button>
-                    <button onclick="editingId=null; refreshDisplay()" style="flex:0.5; background:#444; color:white; border:none; padding:8px; border-radius:5px;">戻る</button>   </div>
-            </div>
-        `;
-    }
-   };
+        const card = document.querySelector(`[data-id="${id}"]`);
+        if (card) {
+            // ★グリッド表示の時だけ、横幅をいっぱいに広げるスタイルを当てる
+            if (viewMode === 'grid') {
+                card.style.gridColumn = "1 / -1"; // 横いっぱいに広がる
+                card.style.height = "auto";       // 高さを自由にする
+            }
+
+            card.innerHTML = `
+                <div style="background:#1a1a1a; padding:20px; border-radius:15px; border:2px solid var(--neon-blue); box-shadow: 0 0 20px rgba(0,255,255,0.2); width:100%; box-sizing:border-box;">
+                    <div style="font-size:14px; color:var(--gold); margin-bottom:12px; font-weight:bold; display:flex; justify-content:space-between;">
+                        <span>📝 クイック編集モード</span>
+                        <span>${m.title}</span>
+                    </div>
+                    
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:11px; color:#888;">点数 (MAX 120)</label>
+                        <input type="number" id="edit-score-${id}" value="${m.score}" style="font-size:20px; padding:10px; background:#000; border:1px solid #444;">
+                    </div>
+
+                    <div style="margin-bottom:15px;">
+                        <label style="font-size:11px; color:#888;">感想・メモ</label>
+                        <textarea id="edit-comment-${id}" style="font-size:16px; height:120px; line-height:1.5; padding:12px; background:#000; border:1px solid #444;">${m.comment || ''}</textarea>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="quickSave('${id}')" style="flex:2; background:var(--neon-blue); color:black; border:none; padding:15px; border-radius:10px; font-weight:bold; font-size:16px;">✅ 保存して閉じる</button>
+                        <button onclick="editingId=null; refreshDisplay()" style="flex:1; background:#444; color:white; border:none; padding:15px; border-radius:10px;">キャンセル</button>
+                    </div>
+                </div>
+            `;
+            // 編集画面が見えるようにスクロール
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
     window.quickSave = async (id) => {
         const newScore = Number(document.getElementById(`edit-score-${id}`).value);
         const newComment = document.getElementById(`edit-comment-${id}`).value;
