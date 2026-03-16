@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎬 昭和の名画座・マイ視聴録クラウド</title>
     <style>
+      .movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* 画面幅に合わせて自動調整 */
+    gap: 20px;
+    justify-items: center;
+}
+.card {
+    width: 100%; /* グリッドに合わせて幅を自動にする */
+    max-width: 350px;
+}
+/* 媒体ラベルのスタイル */
+.platform-label {
+    font-size: 10px;
+    background: #444;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 5px;
+}
         :root { --neon-pink: #ff00ff; --neon-blue: #00ffff; --gold: #ffd700; }
         body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; background: #121212; color: #fff; line-height: 1.5; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; background: #1e1e1e; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.7); }
@@ -75,34 +93,46 @@
         <div id="hall-of-fame-list" class="marquee">【今夜のノミネート】 名作が次々と蘇る！ 🎬 </div>
     </div>
 
-    <div class="container">
+   <div class="container">
+    <div id="main-content">
         <div class="input-form">
-            <select id="movie-select" onchange="selectFromHistory()" style="margin-bottom: 15px;">
-                <option value="">-- 過去の作品から選ぶ --</option>
-            </select>
-
+            <select id="movie-select" onchange="selectFromHistory()"><option value="">-- 過去作から選ぶ --</option></select>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="movie-title" placeholder="作品タイトル" style="flex: 2; margin-bottom: 0;">
-                <input type="text" id="movie-tags" placeholder="🏷 タグ（スペース区切り）" style="flex: 1; margin-bottom: 0;">
+                <input type="text" id="movie-tags" placeholder="🏷 ジャンル/タグ" style="flex: 1; margin-bottom: 0;">
             </div>
+            <div id="tag-cloud" style="margin-bottom: 10px; min-height: 20px;"></div>
 
-            <div id="tag-cloud" style="margin-top: -5px; margin-bottom: 10px; min-height: 20px; text-align: left;"></div>
-
-            <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2" style="margin-bottom: 10px;"></textarea>
-
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <select id="movie-platform" style="flex: 1; margin-bottom: 0;">
+                    <option value="🎥 映画館">🎥 映画館</option>
+                    <option value="📺 配信">📺 配信</option>
+                    <option value="💿 DVD/BD">💿 DVD/BD</option>
+                    <option value="📻 その他">📻 その他</option>
+                </select>
                 <input type="month" id="movie-date" style="flex: 1; margin-bottom: 0;" onclick="this.showPicker()">
-                <input type="number" id="movie-score" placeholder="得点" style="flex: 1; margin-bottom: 0;">
-                <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60; height: 45px;">💾 保存</button>
+                <input type="number" id="movie-score" placeholder="点数" style="flex: 0.6; margin-bottom: 0;">
+                <button id="save-btn" onclick="addMovie()" style="flex: 1; background: #27ae60;">💾 保存</button>
             </div>
+            <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2"></textarea>
         </div>
+
         <div class="roulette-box">
-            <button onclick="startRoulette()" style="background: #e74c3c; margin-bottom:10px; width: 100%;">🎰 今夜の推薦作品を抽選</button>
+            <select id="roulette-mode" style="width: auto; background: #222; margin-bottom: 10px;">
+                <option value="0">全ての作品から抽選</option>
+                <option value="90">90点以上から抽選</option>
+                <option value="100">100点以上から抽選</option>
+                <option value="120">120点のみ抽選</option>
+            </select><br>
+            <button onclick="startRoulette()" style="background: #e74c3c; width: 80%;">🎰 今夜の推薦作品を抽選</button>
             <div id="roulette-result">・・・</div>
         </div>
-<div id="year-filter-container" style="margin-bottom: 15px; text-align: center;"></div>
-        <input type="text" id="search-input" placeholder="🔍 名前やタグで検索..." oninput="refreshDisplay()" style="margin-bottom: 25px;">
-        <div id="movie-list" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;"></div>
+
+        <div id="year-filter-container" style="margin-bottom: 10px; text-align: center;"></div>
+        <div id="genre-filter-container" style="margin-bottom: 20px; text-align: center;"></div>
+
+        <input type="text" id="search-input" placeholder="🔍 自由検索..." oninput="refreshDisplay()" style="margin-bottom: 25px;">
+        <div id="movie-list" class="movie-grid"></div>
     </div>
 </div>
 
@@ -154,16 +184,18 @@
         });
     }
 
+   // 保存処理に「媒体」を追加
     window.addMovie = async () => {
         const title = document.getElementById('movie-title').value.trim();
         const tagInput = document.getElementById('movie-tags').value.trim();
         const date = document.getElementById('movie-date').value;
         const score = Number(document.getElementById('movie-score').value) || 0;
         const comment = document.getElementById('movie-comment').value.trim();
+        const platform = document.getElementById('movie-platform').value; // ★媒体
         
         if (!title || !date) return alert("タイトルと年月を入れてね！");
         const tags = tagInput.split(/[\s,、]+/).filter(t => t !== "");
-        const movieData = { uid: currentUser.uid, title, tags, date, score, comment, updatedAt: Date.now() };
+        const movieData = { uid: currentUser.uid, title, tags, date, score, comment, platform, updatedAt: Date.now() };
 
         if (editingId) {
             await updateDoc(doc(db, "movies", editingId), movieData);
@@ -180,47 +212,21 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        // 年代ボタンの表示
-        const yearContainer = document.getElementById('year-filter-container');
-        if (yearContainer) {
-            yearContainer.innerHTML = `<button onclick="window.filterByYear('')" style="background:${window.selectedYear === '' ? 'var(--neon-pink)' : '#444'}; margin-right:5px; padding:5px 10px; font-size:12px;">全て</button>`;
-            const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
-            allYears.forEach(year => {
-                const btn = document.createElement('button');
-                btn.innerText = year + "年";
-                btn.style.marginRight = "5px"; btn.style.padding = "5px 10px"; btn.style.fontSize = "12px";
-                btn.style.background = (year === window.selectedYear) ? "var(--neon-pink)" : "#222";
-                btn.onclick = () => window.filterByYear(year);
-                yearContainer.appendChild(btn);
-            });
-        }
-
-        // タグ候補の表示
-        const tagCloud = document.getElementById('tag-cloud');
-        if (tagCloud) {
-            tagCloud.innerHTML = "";
+        // --- ジャンルボタンの生成 ---
+        const genreContainer = document.getElementById('genre-filter-container');
+        if (genreContainer) {
+            genreContainer.innerHTML = `<button onclick="window.selectedGenre=''; refreshDisplay()" style="background:${!window.selectedGenre ? 'var(--neon-blue)' : '#444'}; color:#000; margin:3px; padding:4px 8px; font-size:11px;">全ジャンル</button>`;
             const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
             allTags.forEach(tag => {
-                const span = document.createElement('span');
-                span.innerText = "#" + tag; span.className = "tag-candidate";
-                span.onclick = () => {
-                    const input = document.getElementById('movie-tags');
-                    if (!input.value.includes(tag)) input.value = (input.value + " " + tag).trim();
-                };
-                tagCloud.appendChild(span);
+                const btn = document.createElement('button');
+                btn.innerText = "#" + tag;
+                btn.style.cssText = `margin:3px; padding:4px 8px; font-size:11px; background:${window.selectedGenre === tag ? 'var(--neon-blue)' : '#222'}`;
+                btn.onclick = () => { window.selectedGenre = tag; refreshDisplay(); };
+                genreContainer.appendChild(btn);
             });
         }
 
-        // 過去作選択の更新
-        const sel = document.getElementById('movie-select');
-        const titles = [...new Set(allMovies.map(m => m.title))].sort();
-        sel.innerHTML = '<option value="">-- 過去の作品から選ぶ --</option>';
-        titles.forEach(t => {
-            const o = document.createElement('option');
-            o.value = t; o.innerText = t; sel.appendChild(o);
-        });
-
-        // リスト表示
+        // --- タイトルごとにまとめて表示 ---
         const groups = {};
         allMovies.forEach(m => {
             if (!groups[m.title]) groups[m.title] = [];
@@ -228,32 +234,37 @@
         });
 
         Object.keys(groups).forEach(title => {
-            const history = groups[title];
-            // 年代フィルター
-            const filtered = window.selectedYear ? history.filter(h => h.date.startsWith(window.selectedYear)) : history;
-            if (filtered.length === 0) return;
+            const history = groups[title].sort((a,b) => b.date.localeCompare(a.date)); // 日付順
+            const latest = history[0];
 
-            const latest = filtered[0];
-            const match = !qSearch || title.toLowerCase().includes(qSearch) || (latest.tags || []).some(t => t.toLowerCase().includes(qSearch));
-            if (!match) return;
+            // フィルター（年・ジャンル・検索）
+            const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
+            const genreMatch = !window.selectedGenre || (latest.tags || []).includes(window.selectedGenre);
+            const textMatch = !qSearch || title.toLowerCase().includes(qSearch);
+
+            if (!yearMatch || !genreMatch || !textMatch) return;
 
             const card = document.createElement('div');
             card.className = 'card';
             const maxScore = Math.max(...history.map(h => h.score));
             card.style.borderTopColor = maxScore >= 120 ? "var(--gold)" : (maxScore >= 100 ? "var(--neon-blue)" : "#444");
+
             card.innerHTML = `
                 <div style="font-weight:bold; color:var(--gold); font-size:18px;">${title}</div>
                 <div style="margin:8px 0;">${(latest.tags || []).map(t => `<span class="tag">#${t}</span>`).join("")}</div>
                 <div style="background:#111; padding:8px; border-radius:5px; margin-top:10px;">
-                    ${filtered.map(h => `
-                        <div style="font-size:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding:5px 0;">
-                            <span>${h.date}：<b>${h.score}点</b></span>
-                            <span>
-                                <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:12px;">✏️</button>
-                                <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; padding:0; font-size:12px; margin-left:8px;">🗑️</button>
-                            </span>
+                    ${history.map((h, index) => `
+                        <div style="font-size:12px; border-bottom:1px solid #333; padding:5px 0;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span><small class="platform-label">${h.platform || '??'}</small> <b>${history.length - index}回目</b></span>
+                                <span>${h.date}：<b>${h.score}点</b></span>
+                            </div>
+                            <div style="font-size:11px; color:#aaa; margin-top:4px;">"${h.comment || ''}"</div>
+                            <div style="text-align:right;">
+                                <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; padding:0; font-size:11px;">✏️</button>
+                                <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; padding:0; font-size:11px; margin-left:8px;">🗑️</button>
+                            </div>
                         </div>
-                        <div style="font-size:11px; color:#aaa; margin-bottom:8px; padding-left:5px;">"${h.comment || ''}"</div>
                     `).join("")}
                 </div>
             `;
@@ -261,52 +272,19 @@
         });
     };
 
-    window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
-
-    window.editMovie = (id) => {
-        const m = allMovies.find(doc => doc.id === id);
-        if (!m) return;
-        editingId = id;
-        document.getElementById('movie-title').value = m.title;
-        document.getElementById('movie-tags').value = (m.tags || []).join(" ");
-        document.getElementById('movie-date').value = m.date;
-        document.getElementById('movie-score').value = m.score;
-        document.getElementById('movie-comment').value = m.comment;
-        document.getElementById('save-btn').innerText = "🆙 更新";
-        document.getElementById('save-btn').style.background = "#3498db";
-        window.scrollTo(0,0);
-    };
-
-    window.deleteMovie = async (id) => {
-        if (confirm("この視聴記録を抹消するかい？")) await deleteDoc(doc(db, "movies", id));
-    };
-
-    window.selectFromHistory = () => {
-        const val = document.getElementById('movie-select').value;
-        if (val) {
-            document.getElementById('movie-title').value = val;
-            const existing = allMovies.find(m => m.title === val);
-            if (existing) document.getElementById('movie-tags').value = (existing.tags || []).join(" ");
-        }
-    };
-    
-    window.resetForm = () => {
-        document.getElementById('movie-title').value = "";
-        document.getElementById('movie-tags').value = "";
-        document.getElementById('movie-date').value = "";
-        document.getElementById('movie-score').value = "";
-        document.getElementById('movie-comment').value = "";
-        editingId = null;
-        document.getElementById('save-btn').innerText = "💾 保存";
-        document.getElementById('save-btn').style.background = "#27ae60";
-    };
-
+    // ルーレットを条件付きに改造
     window.startRoulette = () => {
+        const mode = Number(document.getElementById('roulette-mode').value);
+        let candidates = allMovies;
+        if (mode > 0) candidates = allMovies.filter(m => m.score >= mode);
+        if (mode === 120) candidates = allMovies.filter(m => m.score === 120);
+
         const res = document.getElementById('roulette-result');
-        if (allMovies.length === 0) return;
+        if (candidates.length === 0) return alert("条件に合う作品がまだないよ！");
+        
         let c = 0;
         const spin = () => {
-            res.innerText = allMovies[Math.floor(Math.random() * allMovies.length)].title;
+            res.innerText = candidates[Math.floor(Math.random() * candidates.length)].title;
             if (c++ < 20) setTimeout(spin, 70);
             else { res.classList.add('flash-effect'); setTimeout(()=>res.classList.remove('flash-effect'), 2000); }
         }; spin();
