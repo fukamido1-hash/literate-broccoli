@@ -125,7 +125,7 @@
     let allMovies = [];
     let editingId = null;
     window.selectedYear = "";
-    window.selectedGenre = "";
+    window.selectedGenres = []; // 複数のジャンルを保存する配列に変更
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -178,7 +178,7 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        // --- フィルタボタン（年・ジャンル）の生成 ---
+        // --- 1. 年代フィルタボタンの生成 ---
         const yearContainer = document.getElementById('year-filter-container');
         const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
         yearContainer.innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>`;
@@ -186,14 +186,22 @@
             yearContainer.innerHTML += `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`;
         });
 
+        // --- 2. ジャンルボタンの生成（★複数選択版に改造！） ---
         const genreContainer = document.getElementById('genre-filter-container');
         const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
-        genreContainer.innerHTML = `<button onclick="filterByGenre('')" class="filter-btn ${window.selectedGenre === '' ? 'active' : ''}">全ジャンル</button>`;
+        
+        // window.selectedGenres が未定義なら空配列にする（エラー防止）
+        if (!window.selectedGenres) window.selectedGenres = [];
+
+        // 「全ジャンル」ボタン
+        genreContainer.innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全ジャンル</button>`;
+        
         allTags.forEach(g => {
-            genreContainer.innerHTML += `<button onclick="filterByGenre('${g}')" class="filter-btn ${window.selectedGenre === g ? 'active' : ''}">#${g}</button>`;
+            const isActive = window.selectedGenres.includes(g);
+            genreContainer.innerHTML += `<button onclick="filterByGenre('${g}')" class="filter-btn ${isActive ? 'active' : ''}">#${g}</button>`;
         });
 
-        // --- タグ入力補助の更新 ---
+        // --- 3. タグ入力補助（クリックで入力欄に足すやつ） ---
         const tagCloud = document.getElementById('tag-cloud');
         tagCloud.innerHTML = "";
         allTags.forEach(tag => {
@@ -206,13 +214,13 @@
             tagCloud.appendChild(span);
         });
 
-        // --- セレクトボックス（過去作）の更新 ---
+        // --- 4. 過去作セレクトボックスの更新 ---
         const sel = document.getElementById('movie-select');
         const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
         sel.innerHTML = '<option value="">-- 過去作から選ぶ --</option>';
         uniqueTitles.forEach(t => sel.innerHTML += `<option value="${t}">${t}</option>`);
 
-        // --- リスト表示 ---
+        // --- 5. データのグループ化と表示 ---
         const groups = {};
         allMovies.forEach(m => {
             if (!groups[m.title]) groups[m.title] = [];
@@ -223,12 +231,17 @@
             const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
             const latest = history[0];
 
+            // 【絞り込みロジック】
             const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
-            const genreMatch = !window.selectedGenre || (latest.tags || []).includes(window.selectedGenre);
+            
+            // ★複数ジャンル一致チェック（選んだタグが全部含まれているか）
+            const genreMatch = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (latest.tags || []).includes(g));
+            
             const textMatch = !qSearch || title.toLowerCase().includes(qSearch) || (latest.comment || "").toLowerCase().includes(qSearch);
 
             if (!yearMatch || !genreMatch || !textMatch) return;
 
+            // カードの描画
             const card = document.createElement('div');
             card.className = 'card';
             const maxScore = Math.max(...history.map(h => h.score));
@@ -253,13 +266,24 @@
                     `).join("")}
                 </div>
             `;
-            list.appendChild(card);
-        });
-    };
+            list
 
     window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
-    window.filterByGenre = (genre) => { window.selectedGenre = genre; refreshDisplay(); };
-
+    window.filterByGenre = (genre) => {
+        if (genre === 'CLEAR') {
+            window.selectedGenres = [];
+        } else {
+            const index = window.selectedGenres.indexOf(genre);
+            if (index > -1) {
+                // すでに選択されてたら解除
+                window.selectedGenres.splice(index, 1);
+            } else {
+                // 選択されてなければ追加
+                window.selectedGenres.push(genre);
+            }
+        }
+        refreshDisplay();
+    };
     window.startRoulette = () => {
         const mode = Number(document.getElementById('roulette-mode').value);
         let candidates = allMovies;
