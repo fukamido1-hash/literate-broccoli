@@ -106,23 +106,48 @@
         <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
 
         <div class="roulette-container">
-            <div id="roulette-display">今夜、何を見る？</div>
-            <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
-        </div>
+    <div id="roulette-display">今夜、何を見る？</div>
+    <div style="margin-bottom: 10px;">
+        <select id="roulette-filter" style="width: auto; font-size: 13px; padding: 5px; margin-bottom: 5px; border-color: var(--neon-pink); color: var(--neon-pink);">
+            <option value="0">ALL（全作品から）</option>
+            <option value="120">🔥 120点のみ！</option>
+            <option value="100">✨ 100点以上</option>
+            <option value="80">👍 80点以上</option>
+        </select>
     </div>
+    <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
+</div>
 
-    <div class="controls">
-        <div class="view-switch">
-            <button id="view-card" class="view-btn active" onclick="setViewMode('card')">🗂 詳細カード</button>
-            <button id="view-grid" class="view-btn" onclick="setViewMode('grid')">📱 一覧グリッド</button>
-        </div>
-        <div class="flex-row" style="margin-bottom:10px;">
-            <select id="sort-order" onchange="refreshDisplay()" style="margin-bottom:0; flex:1;">
-                <option value="date-desc">📅 新しい順</option>
-                <option value="date-asc">📅 古い順</option>
-                <option value="score-desc">🔥 点数順</option>
-                <option value="title-asc">🔤 名前順</option>
-            </select>
+<script>
+// startRoulette関数の中身をこれに書き換えてね
+window.startRoulette = () => {
+    const minScore = Number(document.getElementById('roulette-filter').value);
+    
+    // スコアでフィルタリング（各タイトルの最高スコアで判定）
+    const filteredPool = allMovies.filter(m => m.score >= minScore);
+
+    if (filteredPool.length === 0) {
+        const msg = minScore === 120 ? "120点の作品がまだないよ！" : minScore + "点以上の作品がないよ！";
+        return alert(msg);
+    }
+
+    const display = document.getElementById('roulette-display');
+    let count = 0;
+    const speed = 60;
+    const times = 15;
+
+    const timer = setInterval(() => {
+        const randomMovie = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+        display.innerText = randomMovie.title;
+        count++;
+        if (count > times) {
+            clearInterval(timer);
+            const winner = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+            display.innerHTML = `✨ 決定：<span style="font-size:22px; color:var(--neon-pink);">${winner.title}</span> ✨`;
+        }
+    }, speed);
+};
+</script>
             <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()" style="margin-bottom:0; flex:1.5;">
         </div>
         <div id="year-filter-container" class="filter-scroll"></div>
