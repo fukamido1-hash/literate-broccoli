@@ -3,43 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎬 THE 視聴録 Pro Max</title>
+    <title>🎬 THE 視聴録 Pro Max - Final</title>
     <style>
         :root { --neon-pink: #ff00ff; --neon-blue: #00ffff; --gold: #ffd700; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #121212; color: #fff; margin: 0; padding: 10px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 15px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-        /* ログイン */
+        /* ログイン画面 */
         #auth-screen { text-align: center; padding: 80px 20px; }
-        .login-btn { background: white; color: #444; padding: 18px 30px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+        .login-btn { background: white; color: #444; padding: 18px 30px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; width: 100%; }
 
-        /* フォーム */
+        /* 入力フォーム */
         .input-form { background: #2a2a2a; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #444; }
         input, textarea, select { background: #111; color: #fff; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         .flex-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .flex-row > * { flex: 1; min-width: 120px; }
         #save-btn { background: #27ae60; color:white; height: 55px; font-size: 18px; width: 100%; border-radius: 12px; font-weight: bold; border:none; margin-top: 5px; }
 
-        /* コントロール */
+        /* 操作パネル */
         .controls { background: #111; padding: 12px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
         .view-switch { display: flex; background: #222; border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 12px; }
         .view-btn { flex: 1; background: none; border: none; color: #888; padding: 10px; font-size: 13px; border-radius: 8px; cursor: pointer; }
         .view-btn.active { background: #444; color: #fff; font-weight: bold; }
 
-        /* フィルタ */
+        /* フィルタスクロール */
         .filter-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .filter-scroll::-webkit-scrollbar { display: none; }
         .filter-btn { display: inline-block; background: #333; color: #fff; border: 1px solid #555; padding: 8px 16px; border-radius: 20px; font-size: 13px; margin-right: 6px; cursor: pointer; }
         .filter-btn.active { background: var(--neon-pink); border-color: var(--neon-pink); }
 
+        /* タイトルの省略（魔法の3行） */
+        .card-title {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; /* 2行まで表示 */
+            overflow: hidden;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+
         /* 作品リスト */
         #movie-list { display: grid; gap: 15px; }
         #movie-list.grid-mode { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
         
-        .card { background: #252525; border-radius: 12px; padding: 15px; border-top: 6px solid #444; position: relative; }
-        .grid-mode .card { padding: 10px; text-align: center; border-top-width: 4px; }
-        .grid-mode .card .card-detail { display: none; }
-        
+        .card { background: #252525; border-radius: 12px; padding: 15px; border-top: 6px solid #444; display: flex; flex-direction: column; }
+
+        /* グリッド時のスタイル（高さ統一） */
+        .grid-mode .card { 
+            padding: 12px; 
+            text-align: center; 
+            height: 110px; /* 全てのパネルの高さを固定 */
+            border-top-width: 4px; 
+        }
+        .grid-mode .card .card-detail, .grid-mode .count-badge { display: none; }
+        .grid-mode .card-title { font-size: 14px !important; margin-bottom: auto; }
+
         .platform-label { font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; border-left: 3px solid #888; margin-right: 4px; }
         .count-badge { font-size: 11px; background: var(--neon-pink); color: white; padding: 2px 8px; border-radius: 10px; }
         .tag-candidate { display: inline-block; background: #222; color: var(--neon-blue); padding: 5px 10px; border-radius: 12px; font-size: 12px; margin: 3px; border: 1px solid var(--neon-blue); }
@@ -49,11 +67,12 @@
 
 <div id="auth-screen">
     <h1 style="color:var(--gold);">THE 視聴録</h1>
-    <button class="login-btn" onclick="login()">Googleでログイン</button>
+    <p style="color:#888; margin-bottom: 20px;">あなたの映画愛を、グリッドに。記録に。</p>
+    <button class="login-btn" onclick="login()">Googleでログインして始める</button>
 </div>
 
 <div id="main-content" class="container" style="display:none;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <span id="user-name" style="font-size: 12px; color: #888;"></span>
         <button onclick="logout()" style="background:none; border:none; color:#e74c3c; font-size:12px;">ログアウト</button>
     </div>
@@ -62,23 +81,23 @@
         <select id="movie-select" onchange="selectFromHistory()"><option value="">-- 過去作から選ぶ --</option></select>
         <div class="flex-row">
             <input type="text" id="movie-title" placeholder="作品タイトル">
-            <input type="text" id="movie-tags" placeholder="🏷 タグ (ホラー, 感動...)">
+            <input type="text" id="movie-tags" placeholder="🏷 タグ">
         </div>
-        <div id="tag-cloud" style="margin-bottom: 10px;"></div>
-        <textarea id="movie-comment" placeholder="熱い想いを一行で！" rows="2"></textarea>
+        <div id="tag-cloud"></div>
+        <textarea id="movie-comment" placeholder="熱い一言！" rows="2"></textarea>
         <div class="flex-row">
             <select id="movie-platform" onchange="toggleExtraInput()">
                 <option value="🎥 映画館">🎥 映画館</option>
                 <option value="🔴 Netflix">🔴 Netflix</option>
                 <option value="🔵 U-NEXT">🔵 U-NEXT</option>
                 <option value="🟢 Hulu">🟢 Hulu</option>
-                <option value="🟠 Amazonプライム">🟠 Amazonプラム</option>
+                <option value="🟠 Amazonプライム">🟠 Amazon</option>
                 <option value="🔴 FOD">🔴 FOD</option>
-                <option value="🔵 ディズニープラス">🔵 ディズニープラス</option>
-                <option value="🟡 dアニメストア">🟡 dアニメストア</option>
+                <option value="🔵 ディズニープラス">🔵 Disney+</option>
+                <option value="🟡 dアニメストア">🟡 dアニメ</option>
                 <option value="🟢 ABEMA">🟢 ABEMA</option>
-                <option value="🍎 Apple TV+">🍎 Apple TV+</option>
-                <option value="📺 地上波/BS">📺 地上波/BS</option>
+                <option value="🍎 Apple TV+">🍎 Apple</option>
+                <option value="📺 地上波/BS">📺 地上波</option>
                 <option value="💿 DVD/BD">💿 円盤</option>
                 <option value="📻 配信(その他)">📻 その他</option>
             </select>
@@ -95,11 +114,11 @@
             <button id="view-grid" class="view-btn" onclick="setViewMode('grid')">📱 一覧グリッド</button>
         </div>
         <div class="flex-row" style="margin-bottom:10px;">
-            <select id="sort-order" onchange="refreshDisplay()" style="margin-bottom:0; flex:1;">
+            <select id="sort-order" onchange="refreshDisplay()" style="margin-bottom:0;">
                 <option value="date-desc">📅 新しい順</option>
                 <option value="date-asc">📅 古い順</option>
-                <option value="score-desc">🔥 点数が高い順</option>
-                <option value="title-asc">🔤 タイトル順</option>
+                <option value="score-desc">🔥 点数順</option>
+                <option value="title-asc">🔤 名前順</option>
             </select>
             <input type="text" id="search-input" placeholder="🔍 検索..." oninput="refreshDisplay()" style="margin-bottom:0; flex:1.5;">
         </div>
@@ -107,8 +126,8 @@
         <div id="genre-filter-container" class="filter-scroll"></div>
     </div>
 
-    <div style="text-align:right; font-size:13px; color:var(--gold); margin-bottom:8px;">
-        <span id="movie-count">0</span>作品を表示中
+    <div style="text-align:right; font-size:12px; color:var(--gold); margin-bottom:8px;">
+        <span id="movie-count">0</span>作品
     </div>
     <div id="movie-list"></div>
 </div>
@@ -144,8 +163,7 @@
 
     window.toggleExtraInput = () => {
         const platform = document.getElementById('movie-platform').value;
-        const extraInput = document.getElementById('platform-extra');
-        extraInput.style.display = (platform === '📻 配信(その他)') ? 'block' : 'none';
+        document.getElementById('platform-extra').style.display = (platform === '📻 配信(その他)') ? 'block' : 'none';
     };
 
     window.setViewMode = (mode) => {
@@ -191,7 +209,7 @@
             platform = "📻 " + extraInput.value.trim();
         }
         
-        if (!title || !date) return alert("タイトルと年月を入力してね！");
+        if (!title || !date) return alert("タイトルと年月を入れてね！");
         const tags = tagInput.split(/[\s,、]+/).filter(t => t !== "");
         const movieData = { uid: currentUser.uid, title, tags, date, score, comment, platform, updatedAt: Date.now() };
 
@@ -211,14 +229,9 @@
         const qSearch = document.getElementById('search-input').value.toLowerCase();
         list.innerHTML = "";
 
-        const platformColors = {
-            "Netflix": "#E50914", "U-NEXT": "#31A1EE", "Hulu": "#32E064",
-            "Amazon": "#FF9900", "FOD": "#ED1A3D", "ディズニー": "#113CCF",
-            "dアニメ": "#F08300", "ABEMA": "#00C300", "Apple": "#FFFFFF",
-            "映画館": "#ffd700", "地上波": "#888888", "DVD": "#3498db"
-        };
+        const platformColors = { "Netflix": "#E50914", "U-NEXT": "#31A1EE", "Amazon": "#FF9900", "映画館": "#ffd700" };
 
-        // --- フィルタ生成 ---
+        // フィルタ生成
         const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
         document.getElementById('year-filter-container').innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>` + 
             allYears.map(y => `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`).join("");
@@ -228,23 +241,20 @@
             allTags.map(g => `<button onclick="filterByGenre('${g}')" class="filter-btn ${window.selectedGenres.includes(g) ? 'active' : ''}">#${g}</button>`).join("");
 
         document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `<span class="tag-candidate" onclick="addTagToInput('${tag}')">#${tag}</span>`).join("");
-        
         const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
         document.getElementById('movie-select').innerHTML = '<option value="">-- 過去作から選ぶ --</option>' + uniqueTitles.map(t => `<option value="${t}">${t}</option>`).join("");
 
-        // --- グループ化 & フィルタリング ---
         let groups = {};
         allMovies.forEach(m => { if (!groups[m.title]) groups[m.title] = []; groups[m.title].push(m); });
 
         let displayTitles = Object.keys(groups).filter(title => {
-            const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
-            const yearMatch = !window.selectedYear || history.some(h => h.date.startsWith(window.selectedYear));
-            const genreMatch = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (history[0].tags || []).includes(g));
-            const textMatch = !qSearch || title.toLowerCase().includes(qSearch);
-            return yearMatch && genreMatch && textMatch;
+            const h = groups[title].sort((a,b) => b.date.localeCompare(a.date));
+            const yearM = !window.selectedYear || h.some(m => m.date.startsWith(window.selectedYear));
+            const genreM = window.selectedGenres.length === 0 || window.selectedGenres.every(g => (h[0].tags || []).includes(g));
+            const textM = !qSearch || title.toLowerCase().includes(qSearch);
+            return yearM && genreM && textM;
         });
 
-        // --- ソート ---
         displayTitles.sort((a, b) => {
             const hA = groups[a].sort((x,y) => y.date.localeCompare(x.date));
             const hB = groups[b].sort((x,y) => y.date.localeCompare(x.date));
@@ -259,84 +269,58 @@
             const history = groups[title].sort((a,b) => b.date.localeCompare(a.date));
             const latest = history[0];
             let themeColor = "#444";
-            for (let key in platformColors) { if (latest.platform && latest.platform.includes(key)) { themeColor = platformColors[key]; break; } }
+            for (let k in platformColors) { if (latest.platform.includes(k)) { themeColor = platformColors[k]; break; } }
             
             const card = document.createElement('div');
             card.className = 'card';
             card.style.borderTopColor = Math.max(...history.map(m=>m.score)) >= 120 ? "var(--gold)" : themeColor;
 
-            const historyHtml = history.map((h, idx) => `
-                <div style="font-size:12px; border-bottom:1px solid #333; padding:6px 0;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span><small class="platform-label" style="border-left-color:${themeColor}">${h.platform}</small> <b>${history.length - idx}回目</b></span>
-                        <span style="color:var(--gold); font-weight:bold;">${h.score}点</span>
-                    </div>
-                    <div style="text-align:right; margin-top:4px;">
-                        <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; font-size:12px;">✏️</button>
-                        <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px;">🗑️</button>
-                    </div>
-                </div>
-            `).join("");
-
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div style="font-weight:bold; color:var(--gold); font-size:16px;">${title}</div>
+                    <div class="card-title" style="font-weight:bold; color:var(--gold); font-size:16px;">${title}</div>
                     <div class="count-badge">${history.length}回</div>
                 </div>
                 <div class="card-detail">
                     <div style="margin:5px 0;">${(latest.tags || []).map(t => `<small style="color:var(--neon-blue); margin-right:8px;">#${t}</small>`).join("")}</div>
                     <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin-top:5px;">
                         <div style="display:flex; justify-content:space-between; font-size:12px;">
-                            <span><small class="platform-label" style="border-left-color:${themeColor}">${latest.platform}</small> 最新</span>
+                            <span><small class="platform-label" style="border-left-color:${themeColor}">${latest.platform}</small></span>
                             <span style="color:var(--gold); font-weight:bold;">${latest.score}点</span>
                         </div>
                         <div style="color:#ccc; font-size:12px; margin-top:4px; font-style:italic;">"${latest.comment || ''}"</div>
-                        ${history.length > 1 ? `
-                            <button onclick="toggleHistory('${latest.id}')" id="btn-${latest.id}" style="width:100%; background:none; border:none; color:#888; font-size:11px; margin-top:8px;">▼ 履歴を表示</button>
-                            <div id="hist-${latest.id}" style="display:none; border-top:1px dashed #444; margin-top:8px;">${historyHtml}</div>
-                        ` : `
-                            <div style="text-align:right; margin-top:5px;">
-                                <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px;">✏️</button>
-                                <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px;">🗑️</button>
-                            </div>
-                        `}
+                        <div style="text-align:right; margin-top:8px;">
+                            <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px;">✏️</button>
+                            <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px;">🗑️</button>
+                        </div>
                     </div>
                 </div>
-                ${viewMode === 'grid' ? `<div style="font-size:11px; color:var(--gold); margin-top:5px;">${latest.score}点</div>` : ''}
+                ${viewMode === 'grid' ? `<div style="font-size:11px; color:var(--gold); margin-top:auto;">${latest.score}点</div>` : ''}
             `;
             list.appendChild(card);
         });
         document.getElementById('movie-count').innerText = displayTitles.length;
     };
 
-    window.toggleHistory = (id) => {
-        const el = document.getElementById('hist-' + id);
-        const btn = document.getElementById('btn-' + id);
-        const isHidden = el.style.display === 'none';
-        el.style.display = isHidden ? 'block' : 'none';
-        btn.innerText = isHidden ? '▲ 履歴を閉じる' : '▼ 履歴を表示';
-    };
-
     window.addTagToInput = (tag) => {
         const input = document.getElementById('movie-tags');
         if (!input.value.includes(tag)) input.value = (input.value + " " + tag).trim();
     };
-    window.filterByYear = (year) => { window.selectedYear = year; refreshDisplay(); };
+    window.filterByYear = (y) => { window.selectedYear = y; refreshDisplay(); };
     window.filterByGenre = (g) => {
         if (g === 'CLEAR') window.selectedGenres = [];
         else {
-            const idx = window.selectedGenres.indexOf(g);
-            if (idx > -1) window.selectedGenres.splice(idx, 1);
+            const i = window.selectedGenres.indexOf(g);
+            if (i > -1) window.selectedGenres.splice(i, 1);
             else window.selectedGenres.push(g);
         }
         refreshDisplay();
     };
     window.selectFromHistory = () => {
-        const val = document.getElementById('movie-select').value;
-        if (val) {
-            document.getElementById('movie-title').value = val;
-            const existing = allMovies.find(m => m.title === val);
-            if (existing) document.getElementById('movie-tags').value = (existing.tags || []).join(" ");
+        const v = document.getElementById('movie-select').value;
+        if (v) {
+            document.getElementById('movie-title').value = v;
+            const m = allMovies.find(x => x.title === v);
+            if (m) document.getElementById('movie-tags').value = (m.tags || []).join(" ");
         }
     };
     window.editMovie = (id) => {
