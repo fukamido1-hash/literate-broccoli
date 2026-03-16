@@ -99,44 +99,48 @@
         <button onclick="logout()" style="background:none; border:none; color:#e74c3c; font-size:12px;">ログアウト</button>
     </div>
 <div class="input-form">
-        <div class="category-container" id="category-selector">
-            <button class="cat-btn active" onclick="selectCat(this, '🎬 映画')">🎬 映画</button>
-            <button class="cat-btn" onclick="selectCat(this, '🎥 アニメ')">🎥 アニメ</button>
-            <button class="cat-btn" onclick="selectCat(this, '🌟 アニメ映画')">🌟 アニメ映画</button>
-            <button class="cat-btn" onclick="selectCat(this, '📺 ドラマ')">📺 ドラマ</button>
-        </div>
-        
-<input type="text" id="movie-select" list="movie-options" placeholder="🔍 過去作から検索・自動入力" oninput="selectFromHistory()" style="margin-bottom:15px;">
-<datalist id="movie-options"></datalist>
-        <option value="">-- 過去作から自動入力 --</option>
-    </select>
-        <div class="flex-row">
-            <input type="text" id="movie-title" placeholder="タイトル">
-            <input type="text" id="movie-tags" placeholder="🏷 タグ (半角スペース区切り)">
-        </div>
-        <div id="tag-cloud"></div>
-        <textarea id="movie-comment" placeholder="感想・メモ..." rows="2"></textarea>
+    <div class="category-container" id="category-selector">
+        <button class="cat-btn active" onclick="selectCat(this, '🎬 映画')">🎬 映画</button>
+        <button class="cat-btn" onclick="selectCat(this, '🎥 アニメ')">🎥 アニメ</button>
+        <button class="cat-btn" onclick="selectCat(this, '🌟 アニメ映画')">🌟 アニメ映画</button>
+        <button class="cat-btn" onclick="selectCat(this, '📺 ドラマ')">📺 ドラマ</button>
+    </div>
     
-    　　　<div class="flex-row">
-         <select id="movie-platform">
-             
-    <option value="🎥 映画館">🎥 映画館</option>
-    <option value="🔴 Netflix">🔴 Netflix</option>
-    <option value="🔵 U-NEXT">🔵 U-NEXT</option>
-    <option value="🟠 Amazonプライム">🟠 Amazon</option>
-    <option value="🟢 Hulu">🟢 Hulu</option> <option value="🔵 ディズニープラス">🔵 Disney+</option> <option value="🔴 FOD">🔴 FOD</option>
-    <option value="🟡 dアニメストア">🟡 dアニメ</option>
-    <option value="🟢 ABEMA">🟢 ABEMA</option>
-    <option value="🍎 Apple TV+">🍎 Apple</option>
-    <option value="📺 地上波/BS">📺 地上波</option>
-    <option value="💿 DVD/BD">💿 円盤</option>
-    <option value="📻 配信(その他)">📻 その他</option>
-</select>
-           <input type="month" id="movie-date" style="background: #111; color: #fff;">
+    <input type="text" id="movie-select" list="movie-options" placeholder="🔍 過去作から検索・自動入力" oninput="selectFromHistory()" style="margin-bottom:15px;">
+    <datalist id="movie-options"></datalist>
 
-            <input type="number" id="movie-score" placeholder="点数 (MAX 120)" max="120">
-        </div>
-        <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
+    <div class="flex-row">
+        <input type="text" id="movie-title" placeholder="タイトル">
+        <input type="text" id="movie-tags" placeholder="🏷 タグ (半角スペース区切り)">
+    </div>
+    
+    <div id="tag-cloud"></div>
+    
+    <textarea id="movie-comment" placeholder="感想・メモ..." rows="2"></textarea>
+
+    <div class="flex-row">
+        <select id="movie-platform">
+            <option value="🎥 映画館">🎥 映画館</option>
+            <option value="🔴 Netflix">🔴 Netflix</option>
+            <option value="🔵 U-NEXT">🔵 U-NEXT</option>
+            <option value="🟠 Amazonプライム">🟠 Amazon</option>
+            <option value="🟢 Hulu">🟢 Hulu</option>
+            <option value="🔵 ディズニープラス">🔵 Disney+</option>
+            <option value="🔴 FOD">🔴 FOD</option>
+            <option value="🟡 dアニメストア">🟡 dアニメ</option>
+            <option value="🟢 ABEMA">🟢 ABEMA</option>
+            <option value="🍎 Apple TV+">🍎 Apple</option>
+            <option value="📺 地上波/BS">📺 地上波</option>
+            <option value="💿 DVD/BD">💿 円盤</option>
+            <option value="📻 配信(その他)">📻 その他</option>
+        </select>
+        
+        <input type="month" id="movie-date">
+
+        <input type="number" id="movie-score" placeholder="点数 (MAX 120)" max="120">
+    </div>
+    
+    <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
 
        <div class="roulette-box">
     <div id="roulette-display">今日は何を見る？</div>
