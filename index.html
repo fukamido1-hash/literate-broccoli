@@ -14,7 +14,23 @@
         input, textarea, select { background: #111; color: #fff; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
         .flex-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .flex-row > * { flex: 1; min-width: 120px; }
-        #save-btn { background: #27ae60; color:white; height: 55px; font-size: 18px; width: 100%; border-radius: 12px; font-weight: bold; border:none; margin-top: 5px; }
+        #save-btn { background: #27ae60; color:white; height: 55px; font-size: 18px; width: 100%; border-radius: 12px; font-weight: bold; border:none; margin-top: 5px; cursor: pointer; }
+
+        /* ルーレット（保存ボタンの下に追加） */
+        .roulette-container { 
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a); 
+            padding: 15px; 
+            border-radius: 15px; 
+            margin-top: 15px; 
+            border: 2px dashed var(--neon-pink); 
+            text-align: center;
+        }
+        #roulette-display { font-size: 18px; font-weight: bold; color: var(--gold); min-height: 26px; margin-bottom: 10px; }
+        .roulette-btn { 
+            background: none; border: 1px solid var(--neon-pink); color: var(--neon-pink); 
+            padding: 8px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .roulette-btn:hover { background: var(--neon-pink); color: white; }
 
         /* 操作パネル */
         .controls { background: #111; padding: 12px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
@@ -41,7 +57,7 @@
 
         .platform-label { font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; border-left: 3px solid #888; margin-right: 4px; }
         .count-badge { font-size: 11px; background: var(--neon-pink); color: white; padding: 2px 8px; border-radius: 10px; }
-        .tag-candidate { display: inline-block; background: #222; color: var(--neon-blue); padding: 5px 10px; border-radius: 12px; font-size: 12px; margin: 3px; border: 1px solid var(--neon-blue); }
+        .tag-candidate { display: inline-block; background: #222; color: var(--neon-blue); padding: 5px 10px; border-radius: 12px; font-size: 12px; margin: 3px; border: 1px solid var(--neon-blue); cursor: pointer; }
         
         .history-item { font-size: 12px; border-bottom: 1px solid #333; padding: 8px 0; }
     </style>
@@ -88,6 +104,11 @@
             <input type="number" id="movie-score" placeholder="点数" max="120">
         </div>
         <button id="save-btn" onclick="addMovie()">💾 記録を保存</button>
+
+        <div class="roulette-container">
+            <div id="roulette-display">今夜、何を見る？</div>
+            <button class="roulette-btn" onclick="startRoulette()">🎲 ルーレットを回す</button>
+        </div>
     </div>
 
     <div class="controls">
@@ -142,6 +163,26 @@
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
+
+    // ルーレット機能
+    window.startRoulette = () => {
+        if (allMovies.length === 0) return alert("まずは何か記録してね！");
+        const display = document.getElementById('roulette-display');
+        let count = 0;
+        const speed = 60;
+        const times = 15;
+
+        const timer = setInterval(() => {
+            const randomMovie = allMovies[Math.floor(Math.random() * allMovies.length)];
+            display.innerText = randomMovie.title;
+            count++;
+            if (count > times) {
+                clearInterval(timer);
+                const winner = allMovies[Math.floor(Math.random() * allMovies.length)];
+                display.innerHTML = `✨ 決定：<span style="font-size:22px; color:var(--neon-pink);">${winner.title}</span> ✨`;
+            }
+        }, speed);
+    };
 
     window.toggleExtraInput = () => {
         const platform = document.getElementById('movie-platform').value;
@@ -203,7 +244,6 @@
         list.innerHTML = "";
         const platformColors = { "Netflix": "#E50914", "U-NEXT": "#31A1EE", "Amazon": "#FF9900", "映画館": "#ffd700" };
 
-        // フィルタ生成
         const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().reverse();
         document.getElementById('year-filter-container').innerHTML = `<button onclick="filterByYear('')" class="filter-btn ${window.selectedYear === '' ? 'active' : ''}">全て</button>` + 
             allYears.map(y => `<button onclick="filterByYear('${y}')" class="filter-btn ${window.selectedYear === y ? 'active' : ''}">${y}年</button>`).join("");
@@ -245,7 +285,6 @@
             card.className = 'card';
             card.style.borderTopColor = Math.max(...history.map(m=>m.score)) >= 120 ? "var(--gold)" : themeColor;
 
-            // 履歴HTMLをここで生成
             const historyListHtml = history.map((h, idx) => `
                 <div class="history-item">
                     <div style="display:flex; justify-content:space-between;">
@@ -254,8 +293,8 @@
                     </div>
                     <div style="color:#ccc; margin-top:4px; font-style:italic;">"${h.comment || ''}"</div>
                     <div style="text-align:right; margin-top:5px;">
-                        <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; font-size:12px;">✏️</button>
-                        <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px;">🗑️</button>
+                        <button onclick="editMovie('${h.id}')" style="background:none; color:#3498db; font-size:12px; cursor:pointer; border:none;">✏️</button>
+                        <button onclick="deleteMovie('${h.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px; cursor:pointer; border:none;">🗑️</button>
                     </div>
                 </div>
             `).join("");
@@ -279,8 +318,8 @@
                             <div id="hist-${latest.id}" style="display:none; border-top:1px dashed #444; margin-top:8px;">${historyListHtml}</div>
                         ` : `
                             <div style="text-align:right; margin-top:8px;">
-                                <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px;">✏️</button>
-                                <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px;">🗑️</button>
+                                <button onclick="editMovie('${latest.id}')" style="background:none; color:#3498db; font-size:12px; cursor:pointer; border:none;">✏️</button>
+                                <button onclick="deleteMovie('${latest.id}')" style="background:none; color:#e74c3c; font-size:12px; margin-left:10px; cursor:pointer; border:none;">🗑️</button>
                             </div>
                         `}
                     </div>
