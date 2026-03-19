@@ -392,13 +392,15 @@ const allYears = [...new Set(allMovies.map(m => m.date.split("-")[0]))].sort().r
         const allTags = [...new Set(allMovies.flatMap(m => m.tags || []))].sort();
         document.getElementById('genre-filter-container').innerHTML = `<button onclick="filterByGenre('CLEAR')" class="filter-btn ${window.selectedGenres.length === 0 ? 'active' : ''}">全タグ</button>` + allTags.map(g => `<button onclick="filterByGenre('${g}')" class="filter-btn ${window.selectedGenres.includes(g) ? 'active' : ''}">#${g}</button>`).join("");
         // ↓ ここを丸ごと入れ替え！
-document.getElementById('tag-cloud').innerHTML = allTags.map(tag => `
-    <span class="tag-candidate" 
-          onclick="addTagToInput('${tag}')" 
-          ondblclick="deleteTagGlobally('${tag}')" 
-          style="user-select:none;">
-        #${tag}
-    </span>`).join("");
+const tagHint = `<div style="font-size:10px; color:var(--neon-pink); margin-bottom:5px; margin-left:5px; opacity:0.8;">※不要なタグはダブルクリックで削除できます</div>`;
+        
+        document.getElementById('tag-cloud').innerHTML = tagHint + allTags.map(tag => `
+            <span class="tag-candidate" 
+                  onclick="addTagToInput('${tag}')" 
+                  ondblclick="deleteTagGlobally('${tag}')" 
+                  style="user-select:none;">
+                #${tag}
+            </span>`).join("");
         // 過去作リスト（datalist）の中身を作る
         const uniqueTitles = [...new Set(allMovies.map(m => m.title))].sort();
         document.getElementById('movie-options').innerHTML = uniqueTitles
