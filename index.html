@@ -605,45 +605,41 @@ if (viewMode === 'grid') {
         document.getElementById('movie-score').value = ""; document.getElementById('movie-comment').value = "";
         document.getElementById('save-btn').innerText = "💾 記録を保存"; editingId = null;
     };
-   window.deleteTagGlobally = async (tag) => {
-    if (!confirm(`全データからタグ「#${tag}」を完全に消去してもいい？\n(間違えて登録したタグを掃除する機能だよ！)`)) return;
+  window.deleteTagGlobally = async (tag) => {
+        if (!confirm(`全データからタグ「#${tag}」を完全に消去してもいい？\n(間違えて登録したタグを掃除する機能だよ！)`)) return;
 
-    // そのタグが含まれている作品を抽出
-    const targets = allMovies.filter(m => (m.tags || []).includes(tag));
-    
-    if (targets.length === 0) return;
+        try {
+            // そのタグが含まれている作品をすべて更新する
+            const updates = allMovies
+                .filter(m => (m.tags || []).includes(tag))
+                .map(m => {
+                    const newTags = m.tags.filter(t => t !== tag);
+                    return updateDoc(doc(db, "movies", m.id), { tags: newTags });
+                });
 
-    try {
-        const promises = targets.map(m => {
-            const newTags = m.tags.filter(t => t !== tag); // そのタグだけを除去
-            return updateDoc(doc(db, "movies", m.id), {
-                tags: newTags,
-                updatedAt: Date.now()
-            });
-        });
-
-        await Promise.all(promises);
-        alert(`「#${tag}」を${targets.length}件のデータから削除したよ！`);
-        refreshDisplay();
-    } catch (e) {
-        console.error(e);
-        alert("タグの削除中にエラーが起きちゃった。");
-    }
-};
-
-    window.deleteMovie = async (id) => { 
-        if (confirm("消してもいい？")) await deleteDoc(doc(db, "movies", id)); 
+            await Promise.all(updates);
+            alert(`「#${tag}」を消去したよ！`);
+        } catch (e) {
+            console.error(e);
+            alert("削除中にエラーが起きちゃった。");
+        }
     };
 
+    // 最後に足りなかった閉じタグたち
     window.resetForm = () => {
         document.getElementById('movie-title').value = ""; 
         document.getElementById('movie-tags').value = "";
         document.getElementById('movie-score').value = ""; 
         document.getElementById('movie-comment').value = "";
-        document.getElementById('save-btn').innerText = "💾 記録を保存する"; 
+        document.getElementById('save-btn').innerText = "💾 記録を保存"; 
         editingId = null;
     };
-// scriptタグの閉じ
+
+    window.deleteMovie = async (id) => { 
+        if (confirm("消してもいい？")) await deleteDoc(doc(db, "movies", id)); 
+    };
+
 </script>
+
 </body>
 </html>
