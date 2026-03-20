@@ -598,7 +598,6 @@ if (viewMode === 'grid') {
         alert("保存に失敗しちゃった。もう一回試してみて！");
     }
 };
-};
     window.deleteMovie = async (id) => { if (confirm("消してもいい？")) await deleteDoc(doc(db, "movies", id)); };
     window.resetForm = () => {
         document.getElementById('movie-title').value = ""; document.getElementById('movie-tags').value = "";
