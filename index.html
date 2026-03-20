@@ -370,6 +370,7 @@ input[type="month"] {
         }
         
         resetForm();
+document.getElementById('movie-list').scrollIntoView({ behavior: 'smooth' });
     };
 
     window.refreshDisplay = () => {
@@ -558,6 +559,10 @@ if (viewMode === 'grid') {
                     <label style="font-size:11px; color:#888;">感想</label>
                     <textarea id="edit-comment-${id}" style="height:80px; background:#000;">${m.comment || ''}</textarea>
                 </div>
+                <div style="margin-bottom:12px;">
+    <label style="font-size:11px; color:#888;">視聴年月</label>
+    <input type="month" id="edit-date-${id}" value="${m.date}" style="background:#000; color:#fff; border:1px solid var(--neon-pink);">
+</div>
 
                 <div style="display:flex; gap:10px;">
                     <button onclick="quickSave('${id}')" style="flex:2; background:var(--neon-pink); color:white; padding:12px; border-radius:10px; font-weight:bold;">✅ 保存</button>
@@ -571,22 +576,28 @@ if (viewMode === 'grid') {
     const newScore = Number(document.getElementById(`edit-score-${id}`).value);
     const newComment = document.getElementById(`edit-comment-${id}`).value;
     const newCat = document.getElementById(`edit-cat-${id}`).value;
-    const newPlatform = document.getElementById(`edit-platform-${id}`).value; // 追加
+    const newPlatform = document.getElementById(`edit-platform-${id}`).value;
     const newTags = document.getElementById(`edit-tags-${id}`).value.split(/[\s,、]+/).filter(t => t);
+    
+    // 💡 ここ！新しい日付を取得する
+    const newDate = document.getElementById(`edit-date-${id}`).value;
 
     try {
         await updateDoc(doc(db, "movies", id), {
             score: newScore,
             comment: newComment,
             category: newCat,
-            platform: newPlatform, // 追加
+            platform: newPlatform,
             tags: newTags,
+            date: newDate, // 💡 これでデータベースの日付が上書きされるよ！
             updatedAt: Date.now()
         });
         editingId = null; 
+        refreshDisplay(); // 💡 画面を最新の状態に更新
     } catch (e) {
         alert("保存に失敗しちゃった。もう一回試してみて！");
     }
+};
 };
     window.deleteMovie = async (id) => { if (confirm("消してもいい？")) await deleteDoc(doc(db, "movies", id)); };
     window.resetForm = () => {
@@ -594,21 +605,45 @@ if (viewMode === 'grid') {
         document.getElementById('movie-score').value = ""; document.getElementById('movie-comment').value = "";
         document.getElementById('save-btn').innerText = "💾 記録を保存"; editingId = null;
     };
-    window.deleteTagGlobally = async (tag) => {
+   window.deleteTagGlobally = async (tag) => {
     if (!confirm(`全データからタグ「#${tag}」を完全に消去してもいい？\n(間違えて登録したタグを掃除する機能だよ！)`)) return;
 
-    // そのタグが含まれている作品を全部探す
+    // そのタグが含まれている作品を抽出
     const targets = allMovies.filter(m => (m.tags || []).includes(tag));
     
-    // 見つかった作品から、そのタグだけを取り除いて上書き更新する
-    const promises = targets.map(m => {
-        const newTags = m.tags.filter(t => t !== tag);
-        return updateDoc(doc(db, "movies", m.id), { tags: newTags });
-    });
+    if (targets.length === 0) return;
 
-    await Promise.all(promises);
-    alert(`「#${tag}」の掃除が終わったよ！`);
+    try {
+        const promises = targets.map(m => {
+            const newTags = m.tags.filter(t => t !== tag); // そのタグだけを除去
+            return updateDoc(doc(db, "movies", m.id), {
+                tags: newTags,
+                updatedAt: Date.now()
+            });
+        });
+
+        await Promise.all(promises);
+        alert(`「#${tag}」を${targets.length}件のデータから削除したよ！`);
+        refreshDisplay();
+    } catch (e) {
+        console.error(e);
+        alert("タグの削除中にエラーが起きちゃった。");
+    }
 };
+
+    window.deleteMovie = async (id) => { 
+        if (confirm("消してもいい？")) await deleteDoc(doc(db, "movies", id)); 
+    };
+
+    window.resetForm = () => {
+        document.getElementById('movie-title').value = ""; 
+        document.getElementById('movie-tags').value = "";
+        document.getElementById('movie-score').value = ""; 
+        document.getElementById('movie-comment').value = "";
+        document.getElementById('save-btn').innerText = "💾 記録を保存する"; 
+        editingId = null;
+    };
+// scriptタグの閉じ
 </script>
 </body>
 </html>
